@@ -70,7 +70,7 @@ const uint64_t TWO_ADIC_ROOT_OF_UNITY_r[4]={
 
 ///Fq parameters
 //Fq modulus 
-const uint64_t MODULUS_q[4] = { 
+const uint64_t MODULUS_q[6] = { 
     0xb9feffffffffaaab,
     0x1eabfffeb153ffff,
     0x6730d2a0f6b0f624,
@@ -79,7 +79,7 @@ const uint64_t MODULUS_q[4] = {
     0x1a0111ea397fe69a
 };
 
-const uint64_t TWO_ADIC_ROOT_OF_UNITY_q[4] = { 
+const uint64_t TWO_ADIC_ROOT_OF_UNITY_q[6] = { 
     0x43f5fffffffcaaae,
     0x32b7fff2ed47fffd,
     0x7e83a49a2e99d69,
@@ -100,7 +100,7 @@ const int CAPACITY_q = MODULUS_BITS_q - 1;
 const int REPR_SHAVE_BITS_q = 3;
 
 //Fq R = 2^256 mod q
-const uint64_t R_q[4]={
+const uint64_t R_q[6]={
     0x760900000002fffd,
     0xebf4000bc40c0002,
     0x5f48985753c758ba,
@@ -110,7 +110,7 @@ const uint64_t R_q[4]={
 };
 
 /// R^2 = 2^512 mod q
-const uint64_t R2_q[4]={
+const uint64_t R2_q[6]={
     0xf4df1f341c341746,
     0xa76e6a609d104f1,
     0x8de5476c4c95b6d5,

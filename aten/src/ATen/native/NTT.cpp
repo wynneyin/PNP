@@ -100,7 +100,7 @@ Tensor intt_zkp_cpu(const Tensor& input) {
     auto out_sizes = input.numel();
     uint32_t log_size = uint32_t(log2(out_sizes));
     auto ptr = input.mutable_data_ptr<uint64_t>();
-    printf("array[1]=%ld\n",*(ptr+4));
+    std::cout<<"array[1]="<<ptr[4]<<std::endl;
     NTT(ptr, false, log_size);
 
     return input;

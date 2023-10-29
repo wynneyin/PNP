@@ -4886,6 +4886,16 @@
   autogen: relu.out
   tags: pointwise
 
+- func: ntt_zkp(Tensor self) -> Tensor
+  device_check: NoCheck   # TensorIterator
+  dispatch:
+    CPU: ntt_zkp_cpu
+
+- func: intt_zkp(Tensor self) -> Tensor
+  device_check: NoCheck   # TensorIterator
+  dispatch:
+    CPU: intt_zkp_cpu
+
 - func: relu6(Tensor self) -> Tensor
   python_module: nn
 

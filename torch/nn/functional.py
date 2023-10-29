@@ -1607,6 +1607,20 @@ In-place version of :func:`~selu`.
 )
 
 
+def ntt_zkp(input: Tensor) -> Tensor:
+    r"""
+        ntt_zkp
+    """
+    result = torch.ntt_zkp(input)
+    return result
+
+def intt_zkp(input: Tensor) -> Tensor:
+    r"""
+        intt_zkp
+    """
+    result = torch.intt_zkp(input)
+    return result
+
 def celu(input: Tensor, alpha: float = 1.0, inplace: bool = False) -> Tensor:
     r"""celu(input, alpha=1., inplace=False) -> Tensor
 

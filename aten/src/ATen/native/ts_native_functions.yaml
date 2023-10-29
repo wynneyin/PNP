@@ -106,6 +106,8 @@ full_codegen:
   - random.to
   - reciprocal
   - relu
+  - ntt_zkp
+  - intt_zkp
   - remainder.Tensor
   - repeat
   - rsqrt

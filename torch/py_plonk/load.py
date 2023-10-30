@@ -11,12 +11,12 @@ def parse_bigint(s, limbs):
     end = s.find(')')
     bigint_str = s[start:end]
     data = gmpy2.mpz(bigint_str,16)
-    data_array = []
-    for i in range(limbs):
-        parse_data = int(data & 0xFFFFFFFFFFFFFFFF)
-        data = data >> 64
-        data_array.append(parse_data)
-    return data_array
+    # data_array = []
+    # for i in range(limbs):
+    #     parse_data = int(data & 0xFFFFFFFFFFFFFFFF)
+    #     data = data >> 64
+    #     data_array.append(parse_data)
+    return data
 
 def read_pp_data(filename):
     # 打开文本文件以读取数据
@@ -236,7 +236,11 @@ def read_pk_data(filename):
             matches = re.findall(pattern, line)
             element_str = matches[0].strip('[]')
             extracted_list = [int(x) for x in element_str.split(',')]
-            value = fr.Fr(value=extracted_list)
+            value = 0
+            for i in reversed(extracted_list):
+                value = value<<64
+                value = value | i
+            value = fr.Fr(value= gmpy2.mpz(value))
             if subkey==None and subsubkey==None:
                 data[current_key].append(value)
             elif subkey and subsubkey==None:
@@ -289,7 +293,11 @@ def read_cs_data(filename):
     match = re.search(pattern, lines[-1])
     pi = match.group(1)
     public_inputs_list = [int(x) for x in pi.split(',')]
-    public_inputs = fr.Fr(value=public_inputs_list)
+    public_input = 0
+    for i in reversed(public_inputs_list):
+        public_input = public_input<<64
+        public_input = public_input | i
+    public_inputs = fr.Fr(value=gmpy2.mpz(public_input))
     data = {}
     data["n"]=n
     data["intended_pi_pos"]=eval(intended_pi_pos)
@@ -326,7 +334,11 @@ def read_scalar_data(filename):
         str_list=content.split('Fp256(BigInteger256(')[1].split(')')[0]
         element_str = str_list.strip('[]')
         elements = [int(e) for e in element_str.split(',')]
-        big_list.append(fr.Fr(value=elements))
+        value = 0
+        for i in reversed(elements):
+            value = value<<64
+            value = value | i
+        big_list.append(fr.Fr(value = gmpy2.mpz(value)))
 
     matches.pop(0)
 
@@ -335,7 +347,9 @@ def read_scalar_data(filename):
         # 去除字符串中的方括号，并按逗号分割成元素列表
         elements_str = match.strip('[]')
         elements = [int(e) for e in elements_str.split(',')]
-        # 将元素列表作为子列表追加到大列表中
-        # 将元素列表合并成一个256位整数
-        big_list.append(fr.Fr(value=elements))
+        value = 0
+        for i in reversed(elements):
+            value = value<<64
+            value = value | i
+        big_list.append(fr.Fr(value = gmpy2.mpz(value)))
     return big_list

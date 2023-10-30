@@ -53,7 +53,7 @@ def operator(domain:Radix2EvaluationDomain, xi:list[fr.Fr], root:fr.Fr):
     return xi
 
 def resize(self, target_len, padding):
-    res = self[:]
+    res = copy.deepcopy(self)
     if len(self) < target_len:
         num_to_pad = target_len - len(self)
         res.extend([padding for _ in range(num_to_pad)])
@@ -112,6 +112,15 @@ def from_list_gmpy(input:list):
             output = output | j
         input[i] =  fr.Fr(value=output)
 
+def from_gmpy_list(input:list):
+    for i in range(len(input)):
+        output = []
+        for j in range(fr.Fr.Limbs):
+            output.append( int(input[i].value & 0xFFFFFFFFFFFFFFFF) )
+            input[i].value = input[i].value >> 64
+        input[i] = fr.Fr(value = output)
+
+
 def NTT(domain,coeffs):
     zero = fr.Fr.zero()
     #add zero to resize
@@ -121,8 +130,9 @@ def NTT(domain,coeffs):
 
 def INTT(domain,evals):
     #add zero to resize
-    zero = fr.Fr.zero_in_list()
+    zero = fr.Fr.zero()
     resize_evals = resize(evals,domain.size,zero)
+    from_gmpy_list(resize_evals)
     input = from_list_tensor(resize_evals)
     # evals = operator(domain,resize_evals,domain.group_gen_inv)
     output = torch.intt_zkp(input)

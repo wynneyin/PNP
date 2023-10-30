@@ -4,7 +4,7 @@ from ..jacobian import ProjectivePointG1
 from ..field import field
 from ..bls12_381 import fr,fq
 from typing import List
-from ..arithmetic import MSM,skip_leading_zeros_and_convert_to_bigints,convert_to_bigints,rand_poly,poly_add_poly_mul_const,evaluate,from_coeff_vec,poly_div_poly
+from ..arithmetic import MSM,skip_leading_zeros_and_convert_to_bigints,convert_to_bigints,rand_poly,poly_add_poly_mul_const,evaluate,from_coeff_vec,poly_div_poly,from_list_gmpy
 from ..plonk_core.src.proof_system.linearisation_poly import ProofEvaluations
 import random
 
@@ -74,7 +74,7 @@ def open(
 
     for polynomial, rand in zip(labeled_polynomials, rands):
 
-        combined_polynomial = poly_add_poly_mul_const(combined_polynomial,curr_challenge, polynomial.poly)
+        combined_polynomial = poly_add_poly_mul_const(combined_polynomial,curr_challenge, polynomial)
         combined_rand.add_assign(curr_challenge, rand)
         curr_challenge = opening_challenges(opening_challenge, opening_challenge_counter)
         opening_challenge_counter += 1
@@ -104,6 +104,7 @@ class LabeledPoly:
         return cls(label=label, hiding_bound=hiding_bound, poly=poly)
 
 
+    
 def commit_poly(ck:UniversalParams,polynomial,params):
     random.seed(42)
     hiding_bound = None

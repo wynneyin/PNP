@@ -77,7 +77,7 @@ class Radix2EvaluationDomain:
             # and v_i = g * v_{i-1}, it follows that
             # l_i = g^-1 * l_{i-1}
             # TODO: consider caching the computation of l_i to save N multiplications
-            from arithmetic import batch_inversion
+            from .arithmetic import batch_inversion
 
             # v_0_inv = m * h^(m-1)
             f_size = fr.Fr.from_repr(size)

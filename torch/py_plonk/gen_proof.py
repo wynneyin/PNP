@@ -52,10 +52,10 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                w_o_rands,
                w_4_rands]
     
-    transcript.append(b"w_l",w_l_commits.commitment.value)
-    transcript.append(b"w_r",w_r_commits.commitment.value)
-    transcript.append(b"w_o",w_o_commits.commitment.value)
-    transcript.append(b"w_4",w_4_commits.commitment.value)
+    transcript.append(b"w_l",w_l_commits.value)
+    transcript.append(b"w_r",w_r_commits.value)
+    transcript.append(b"w_o",w_o_commits.value)
+    transcript.append(b"w_4",w_4_commits.value)
     #2. Derive lookup polynomials
 
     # Generate table compression factor
@@ -78,7 +78,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     # is an element of the compressed lookup table even when
     # q_lookup[i] is 0 so the lookup check will pass
 
-    q_lookup_pad = [fr.Fr(value=gmpy2.mpz(0))] * (n - len(cs.q_lookup))
+    q_lookup_pad = [fr.Fr(value=gmpy2.mpz(0)) for _ in  range((n - len(cs.q_lookup)))]
     padded_q_lookup = cs.q_lookup + q_lookup_pad
 
     f_scalars = multiset.MultiSet([[],[],[],[]])
@@ -103,7 +103,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
 
     # Commit to query polynomial
     f_poly_commit, _ = kzg10.commit_poly(pp,f_poly,Fr)
-    transcript.append(b"f",f_poly_commit.commitment.value)
+    transcript.append(b"f",f_poly_commit.value)
 
     # Compute s, as the sorted and concatenated version of f and t
     h_1, h_2 = compressed_t_multiset.combine_split(compressed_f_multiset)
@@ -121,8 +121,8 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     h_2_poly_commit,_ = kzg10.commit_poly(pp,h_2_poly,Fr)
 
     # Add h polynomials to transcript
-    transcript.append(b"h1", h_1_poly_commit.commitment.value)
-    transcript.append(b"h2", h_2_poly_commit.commitment.value)
+    transcript.append(b"h1", h_1_poly_commit.value)
+    transcript.append(b"h2", h_2_poly_commit.value)
 
     # 3. Compute permutation polynomial
 
@@ -162,7 +162,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     z_poly_commit,_ = kzg10.commit_poly(pp,z_poly,Fr)
 
     # Add permutation polynomial commitment to transcript.
-    transcript.append(b"z", z_poly_commit.commitment.value)
+    transcript.append(b"z", z_poly_commit.value)
     
     # Compute mega permutation polynomial.
     # Compute lookup permutation poly
@@ -238,14 +238,14 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     t_8_commits, _ = kzg10.commit_poly(pp,t_i_poly[7],Fr)
 
     # Add quotient polynomial commitments to transcript
-    transcript.append(b"t_1", t_1_commits.commitment.value)
-    transcript.append(b"t_2", t_2_commits.commitment.value)
-    transcript.append(b"t_3", t_3_commits.commitment.value)
-    transcript.append(b"t_4", t_4_commits.commitment.value)
-    transcript.append(b"t_5", t_5_commits.commitment.value)
-    transcript.append(b"t_6", t_6_commits.commitment.value)
-    transcript.append(b"t_7", t_7_commits.commitment.value)
-    transcript.append(b"t_8", t_8_commits.commitment.value)
+    transcript.append(b"t_1", t_1_commits.value)
+    transcript.append(b"t_2", t_2_commits.value)
+    transcript.append(b"t_3", t_3_commits.value)
+    transcript.append(b"t_4", t_4_commits.value)
+    transcript.append(b"t_5", t_5_commits.value)
+    transcript.append(b"t_6", t_6_commits.value)
+    transcript.append(b"t_7", t_7_commits.value)
+    transcript.append(b"t_8", t_8_commits.value)
 
     # 4. Compute linearisation polynomial
 
@@ -423,23 +423,23 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     )
 
     Proof = kzg10.Proof(
-            a_comm = w_commits[0].commitment.value,
-            b_comm = w_commits[1].commitment.value,
-            c_comm = w_commits[2].commitment.value,
-            d_comm = w_commits[3].commitment.value,
-            z_comm = saw_commits[0].commitment.value,
-            f_comm = f_poly_commit[0].commitment.value,
-            h_1_comm = h_1_poly_commit[0].commitment.value,
-            h_2_comm = h_2_poly_commit[0].commitment.value,
-            z_2_comm = z_2_poly_commit[0].commitment.value,
-            t_1_comm = t_1_commits.commitment.value,
-            t_2_comm = t_2_commits[1].commitment.value,
-            t_3_comm = t_3_commits[2].commitment.value,
-            t_4_comm = t_4_commits[3].commitment.value,
-            t_5_comm = t_5_commits[4].commitment.value,
-            t_6_comm = t_6_commits[5].commitment.value,
-            t_7_comm = t_7_commits[6].commitment.value,
-            t_8_comm = t_8_commits[7].commitment.value,
+            a_comm = w_l_commits.value,
+            b_comm = w_r_commits.value,
+            c_comm = w_o_commits.value,
+            d_comm = w_4_commits.value,
+            z_comm = z_poly_commits.value,
+            f_comm = f_poly_commit.value,
+            h_1_comm = h_1_poly_commit.value,
+            h_2_comm = h_2_poly_commit.value,
+            z_2_comm = z_2_poly_commit.value,
+            t_1_comm = t_1_commits.value,
+            t_2_comm = t_2_commits.value,
+            t_3_comm = t_3_commits.value,
+            t_4_comm = t_4_commits.value,
+            t_5_comm = t_5_commits.value,
+            t_6_comm = t_6_commits.value,
+            t_7_comm = t_7_commits.value,
+            t_8_comm = t_8_commits.value,
             aw_opening = aw_opening,
             saw_opening = saw_opening,
             evaluations = evaluations)

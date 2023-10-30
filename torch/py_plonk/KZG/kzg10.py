@@ -104,21 +104,12 @@ class LabeledPoly:
         return cls(label=label, hiding_bound=hiding_bound, poly=poly)
 
 
-def commit_poly(ck:UniversalParams,polys,params):
+def commit_poly(ck:UniversalParams,polynomial,params):
     random.seed(42)
-    randomness = []
-    labeled_comm = []
-    for labeled_poly in polys:
-        polynomial = labeled_poly.poly
-        hiding_bound = labeled_poly.hiding_bound
-        label = labeled_poly.label
-
-        powers = [ck.powers_of_g,ck.powers_of_gamma_g]
-
-        comm,rand = Commitment.commit(powers,polynomial,hiding_bound,params)
-        labeled_comm.append(LabeledCommitment.new(label,comm))
-        randomness.append(rand)
-    return labeled_comm,randomness
+    hiding_bound = None
+    powers = [ck.powers_of_g,ck.powers_of_gamma_g]
+    comm,rand = Commitment.commit(powers,polynomial,hiding_bound,params)
+    return comm,rand
 
 def opening_challenges(opening_challenge: fr.Fr, pow):
     return opening_challenge.pow(pow)

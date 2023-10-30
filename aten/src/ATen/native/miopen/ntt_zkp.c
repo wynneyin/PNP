@@ -21,8 +21,18 @@ struct AffinePoint {
     uint64_t y[4];
 };
 
-uint64_t omega12[4];
-uint64_t omega12_inv[4];
+uint64_t omega12[4]={
+    11864420382399758890,
+    18195565927427728881,
+    16759393787988053888,
+    8029136087195778842
+};
+uint64_t omega12_inv[4]={
+    3122910594386215040,
+    685422923818215260,
+    1617402986054825192,
+    5362466006817758141
+};
 
 const uint64_t MODULUS_r[4] = { 
     0xffffffff00000001,
@@ -349,7 +359,7 @@ uint64_t reverse_bits(uint64_t operand,int bit_count){
     return acc;
 }
 
-void fp_one(uint64_t* res){
+void fr_one(uint64_t* res){
     for(int i=0;i<4;i++){
         res[i]=R_r[i];
     }
@@ -364,7 +374,7 @@ void group_sub(uint64_t* self, uint64_t* rhs, uint64_t* res){
     SUB(self, rhs, res, MODULUS_r);
 }
 void scalar_one(uint64_t* result){
-    fp_one(result);
+    fr_one(result);
 }
 
 void precompute_twiddles(uint64_t** twiddles, uint64_t *omega, uint64_t n) {

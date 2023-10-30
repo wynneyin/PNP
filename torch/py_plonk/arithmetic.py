@@ -101,9 +101,17 @@ def from_tensor_list(input:torch.Tensor):
     base_output = input.tolist()
     output = []
     for i in range(len(base_output)):
-        output.append(fr.Fr(value=base_output[i]))
+        output.append(base_output[i])
     return output
     
+def from_list_gmpy(input:list):
+    for i in range(len(input)):
+        output = 0 
+        for j in reversed(input[i]):
+            output = output<<64
+            output = output | j
+        input[i] =  fr.Fr(value=output)
+
 def NTT(domain,coeffs):
     zero = fr.Fr.zero()
     #add zero to resize
@@ -119,6 +127,7 @@ def INTT(domain,evals):
     # evals = operator(domain,resize_evals,domain.group_gen_inv)
     output = torch.intt_zkp(input)
     coeffs = from_tensor_list(output)
+    from_list_gmpy(coeffs)
     for i in range(len(coeffs)):
         coeffs[i] = coeffs[i].mul(domain.size_inv)
     return coeffs

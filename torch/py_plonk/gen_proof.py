@@ -13,7 +13,7 @@ from .plonk_core.src.proof_system import linearisation_poly
 from .arithmetic import INTT,from_coeff_vec,resize
 from .load import read_scalar_data
 from .KZG import kzg10
-from .KZG.kzg10 import Commitment 
+from .KZG.kzg10 import commit
 from .bls12_381 import fq,fr
 
 
@@ -38,10 +38,10 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
 
     w_polys = [w_l_poly,w_r_poly,w_o_poly,w_4_poly]
     
-    w_l_commits, w_l_rands = Commitment.commit(powers,w_l_poly)
-    w_r_commits, w_r_rands = Commitment.commit(powers,w_r_poly)
-    w_o_commits, w_o_rands = Commitment.commit(powers,w_o_poly)
-    w_4_commits, w_4_rands = Commitment.commit(powers,w_4_poly)
+    w_l_commits, w_l_rands = commit(powers,w_l_poly)
+    w_r_commits, w_r_rands = commit(powers,w_r_poly)
+    w_o_commits, w_o_rands = commit(powers,w_o_poly)
+    w_4_commits, w_4_rands = commit(powers,w_4_poly)
 
     w_commits = [w_l_commits,
                  w_r_commits,
@@ -53,10 +53,10 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                w_o_rands,
                w_4_rands]
     
-    transcript.append(b"w_l",w_l_commits.value)
-    transcript.append(b"w_r",w_r_commits.value)
-    transcript.append(b"w_o",w_o_commits.value)
-    transcript.append(b"w_4",w_4_commits.value)
+    transcript.append(b"w_l",w_l_commits)
+    transcript.append(b"w_r",w_r_commits)
+    transcript.append(b"w_o",w_o_commits)
+    transcript.append(b"w_4",w_4_commits)
     #2. Derive lookup polynomials
 
     # Generate table compression factor
@@ -105,7 +105,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     # f_polys = [kzg10.LabeledPoly.new(label="f_poly",hiding_bound=None,poly=f_poly)]
 
     # Commit to query polynomial
-    f_poly_commit, _ = Commitment.commit(powers,f_poly)
+    f_poly_commit, _ = commit(powers,f_poly)
     transcript.append(b"f",f_poly_commit.value)
 
     # Compute s, as the sorted and concatenated version of f and t
@@ -120,12 +120,12 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     # Commit to h polys
     # h_1_polys = [kzg10.LabeledPoly.new(label="h_1_poly",hiding_bound=None,poly=h_1_poly)]
     # h_2_polys = [kzg10.LabeledPoly.new(label="h_1_poly",hiding_bound=None,poly=h_2_poly)]
-    h_1_poly_commit,_ = Commitment.commit(powers,h_1_poly)
-    h_2_poly_commit,_ = Commitment.commit(powers,h_2_poly)
+    h_1_poly_commit,_ = commit(powers,h_1_poly)
+    h_2_poly_commit,_ = commit(powers,h_2_poly)
 
     # Add h polynomials to transcript
-    transcript.append(b"h1", h_1_poly_commit.value)
-    transcript.append(b"h2", h_2_poly_commit.value)
+    transcript.append(b"h1", h_1_poly_commit)
+    transcript.append(b"h2", h_2_poly_commit)
 
     # 3. Compute permutation polynomial
 
@@ -162,10 +162,10 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
         ))
     # Commit to permutation polynomial.
     # z_polys = [kzg10.LabeledPoly.new(label="z_poly",hiding_bound=None,poly=z_poly)]
-    z_poly_commit,_ = Commitment.commit(powers,z_poly)
+    z_poly_commit,_ = commit(powers,z_poly)
 
     # Add permutation polynomial commitment to transcript.
-    transcript.append(b"z", z_poly_commit.value)
+    transcript.append(b"z", z_2_poly_commit)
     
     # Compute mega permutation polynomial.
     # Compute lookup permutation poly
@@ -181,7 +181,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
 
     # Commit to lookup permutation polynomial.
     # z_2_polys = [kzg10.LabeledPoly.new(label="z_2_poly",hiding_bound=None,poly=z_2_poly)]
-    z_2_poly_commit,_ = Commitment.commit(powers,z_2_poly)
+    z_2_poly_commit,_ = commit(powers,z_2_poly)
 
     # 3. Compute public inputs polynomial
     pi_poly = into_dense_poly(cs.public_inputs,cs.intended_pi_pos,n,Fr)
@@ -231,24 +231,24 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     #              kzg10.LabeledPoly.new(label="t_i_polys[7]",hiding_bound=None,poly=t_i_poly[7])]
     
     # t_commits, _ = kzg10.commit_poly(pp,t_i_polys,Fr)
-    t_1_commits, _ = Commitment.commit(powers,t_i_poly[0])
-    t_2_commits, _ = Commitment.commit(powers,t_i_poly[1])
-    t_3_commits, _ = Commitment.commit(powers,t_i_poly[2])
-    t_4_commits, _ = Commitment.commit(powers,t_i_poly[3])
-    t_5_commits, _ = Commitment.commit(powers,t_i_poly[4])
-    t_6_commits, _ = Commitment.commit(powers,t_i_poly[5])
-    t_7_commits, _ = Commitment.commit(powers,t_i_poly[6])
-    t_8_commits, _ = Commitment.commit(powers,t_i_poly[7])
+    t_1_commits, _ = commit(powers,t_i_poly[0])
+    t_2_commits, _ = commit(powers,t_i_poly[1])
+    t_3_commits, _ = commit(powers,t_i_poly[2])
+    t_4_commits, _ = commit(powers,t_i_poly[3])
+    t_5_commits, _ = commit(powers,t_i_poly[4])
+    t_6_commits, _ = commit(powers,t_i_poly[5])
+    t_7_commits, _ = commit(powers,t_i_poly[6])
+    t_8_commits, _ = commit(powers,t_i_poly[7])
 
     # Add quotient polynomial commitments to transcript
-    transcript.append(b"t_1", t_1_commits.value)
-    transcript.append(b"t_2", t_2_commits.value)
-    transcript.append(b"t_3", t_3_commits.value)
-    transcript.append(b"t_4", t_4_commits.value)
-    transcript.append(b"t_5", t_5_commits.value)
-    transcript.append(b"t_6", t_6_commits.value)
-    transcript.append(b"t_7", t_7_commits.value)
-    transcript.append(b"t_8", t_8_commits.value)
+    transcript.append(b"t_1", t_1_commits)
+    transcript.append(b"t_2", t_2_commits)
+    transcript.append(b"t_3", t_3_commits)
+    transcript.append(b"t_4", t_4_commits)
+    transcript.append(b"t_5", t_5_commits)
+    transcript.append(b"t_6", t_6_commits)
+    transcript.append(b"t_7", t_7_commits)
+    transcript.append(b"t_8", t_8_commits)
 
     # 4. Compute linearisation polynomial
 
@@ -338,13 +338,13 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                 h_2_poly,
                 table_poly]
     
-    lin_commits, lin_rands = Commitment.commit(powers,lin_poly)
-    left_sigma_commits, left_sigma_rands = Commitment.commit(powers,pk.permutation.left_sigma[0])
-    right_sigma_commits, right_sigma_rands = Commitment.commit(powers,pk.permutation.right_sigma[0])
-    out_sigma_commits, out_sigma_rands = Commitment.commit(powers,pk.permutation.out_sigma[0])
-    f_poly_sigma_commits, f_poly_rands = Commitment.commit(powers,f_poly)
-    h_2_poly_sigma_commits, h_2_poly_rands = Commitment.commit(powers,h_2_poly)
-    table_poly_commits, table_poly_rands = Commitment.commit(powers,table_poly)
+    lin_commits, lin_rands = commit(powers,lin_poly)
+    left_sigma_commits, left_sigma_rands = commit(powers,pk.permutation.left_sigma[0])
+    right_sigma_commits, right_sigma_rands = commit(powers,pk.permutation.right_sigma[0])
+    out_sigma_commits, out_sigma_rands = commit(powers,pk.permutation.out_sigma[0])
+    f_poly_sigma_commits, f_poly_rands = commit(powers,f_poly)
+    h_2_poly_sigma_commits, h_2_poly_rands = commit(powers,h_2_poly)
+    table_poly_commits, table_poly_rands = commit(powers,table_poly)
 
     aw_commits = [lin_commits,
                   left_sigma_commits,
@@ -389,13 +389,13 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                 z_2_poly,
                 table_poly]
     
-    z_poly_commits, z_poly_rands = Commitment.commit(powers,z_poly)
-    w_l_poly_commits, w_l_poly_rands = Commitment.commit(powers,w_l_poly)
-    w_r_poly_commits, w_r_poly_rands = Commitment.commit(powers,w_r_poly)
-    w_4_poly_commits, w_4_poly_rands = Commitment.commit(powers,w_4_poly)
-    h_1_poly_commits, h_1_poly_rands = Commitment.commit(powers,h_1_poly)
-    z_2_poly_commits, z_2_poly_rands = Commitment.commit(powers,z_2_poly)
-    table_poly_commits, table_poly_rands = Commitment.commit(powers,table_poly)
+    z_poly_commits, z_poly_rands = commit(powers,z_poly)
+    w_l_poly_commits, w_l_poly_rands = commit(powers,w_l_poly)
+    w_r_poly_commits, w_r_poly_rands = commit(powers,w_r_poly)
+    w_4_poly_commits, w_4_poly_rands = commit(powers,w_4_poly)
+    h_1_poly_commits, h_1_poly_rands = commit(powers,h_1_poly)
+    z_2_poly_commits, z_2_poly_rands = commit(powers,z_2_poly)
+    table_poly_commits, table_poly_rands = commit(powers,table_poly)
 
     saw_commits=[z_poly_commits,
                  w_l_poly_commits,
@@ -426,23 +426,23 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     )
 
     Proof = kzg10.Proof(
-            a_comm = w_l_commits.value,
-            b_comm = w_r_commits.value,
-            c_comm = w_o_commits.value,
-            d_comm = w_4_commits.value,
-            z_comm = z_poly_commits.value,
-            f_comm = f_poly_commit.value,
-            h_1_comm = h_1_poly_commit.value,
-            h_2_comm = h_2_poly_commit.value,
-            z_2_comm = z_2_poly_commit.value,
-            t_1_comm = t_1_commits.value,
-            t_2_comm = t_2_commits.value,
-            t_3_comm = t_3_commits.value,
-            t_4_comm = t_4_commits.value,
-            t_5_comm = t_5_commits.value,
-            t_6_comm = t_6_commits.value,
-            t_7_comm = t_7_commits.value,
-            t_8_comm = t_8_commits.value,
+            a_comm = w_l_commits,
+            b_comm = w_r_commits,
+            c_comm = w_o_commits,
+            d_comm = w_4_commits,
+            z_comm = z_poly_commits,
+            f_comm = f_poly_commit,
+            h_1_comm = h_1_poly_commit,
+            h_2_comm = h_2_poly_commit,
+            z_2_comm = z_2_poly_commit,
+            t_1_comm = t_1_commits,
+            t_2_comm = t_2_commits,
+            t_3_comm = t_3_commits,
+            t_4_comm = t_4_commits,
+            t_5_comm = t_5_commits,
+            t_6_comm = t_6_commits,
+            t_7_comm = t_7_commits,
+            t_8_comm = t_8_commits,
             aw_opening = aw_opening,
             saw_opening = saw_opening,
             evaluations = evaluations)

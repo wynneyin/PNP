@@ -6,7 +6,7 @@ from ..bls12_381 import fr,fq
 from typing import List
 from ..arithmetic import MSM,skip_leading_zeros_and_convert_to_bigints,convert_to_bigints,rand_poly,poly_add_poly_mul_const,evaluate,from_coeff_vec,poly_div_poly,from_list_gmpy
 from ..plonk_core.src.proof_system.linearisation_poly import ProofEvaluations
-import random
+
 
 class Randomness:
     def __init__(self, blind_poly: List[fr.Fr]):
@@ -31,26 +31,22 @@ class Randomness:
     def add_assign(self, f:field, other: 'Randomness'):
         self.blind_poly = poly_add_poly_mul_const(self.blind_poly, f, other.blind_poly)
 
-class Commitment:
-    def __init__(self,value):
-        self.value = value
-    @classmethod
-    def commit(cls,powers,polynomial:list[fr.Fr],hiding_bound=None):
-        num_leading_zeros, plain_coeffs = skip_leading_zeros_and_convert_to_bigints(polynomial)
-        commitment:ProjectivePointG1 = MSM(
-            powers[0][num_leading_zeros:],
-            plain_coeffs,
-        )
-        randomness = Randomness.empty()
-        if hiding_bound:
-            randomness = Randomness.rand(hiding_bound)
+def commit(powers,polynomial:list[fr.Fr],hiding_bound=None):
+    num_leading_zeros, plain_coeffs = skip_leading_zeros_and_convert_to_bigints(polynomial)
+    commitment:ProjectivePointG1 = MSM(
+        powers[0][num_leading_zeros:],
+        plain_coeffs,
+    )
+    randomness = Randomness.empty()
+    if hiding_bound:
+        randomness = Randomness.rand(hiding_bound)
 
-        random_ints = convert_to_bigints(randomness.blind_poly)
-        random_commitment:ProjectivePointG1 = MSM(powers[1],random_ints)
-        random_commitment_affine = random_commitment.to_affine()
-        commitment = commitment.add_assign_mixed(random_commitment_affine)
-        commitment_affine = commitment.to_affine()
-        return Commitment(value=commitment_affine),randomness
+    random_ints = convert_to_bigints(randomness.blind_poly)
+    random_commitment:ProjectivePointG1 = MSM(powers[1],random_ints)
+    random_commitment_affine = random_commitment.to_affine()
+    commitment = commitment.add_assign_mixed(random_commitment_affine)
+    commitment_affine = commitment.to_affine()
+    return commitment_affine, randomness
     
 # On input a list of labeled polynomials and a query point, `open` outputs a proof of evaluation
 # of the polynomials at the query point.

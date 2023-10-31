@@ -35,19 +35,18 @@ class Commitment:
     def __init__(self,value):
         self.value = value
     @classmethod
-    def commit(cls,powers,polynomial:list[fr.Fr],hiding_bound,params):
+    def commit(cls,powers,polynomial:list[fr.Fr],hiding_bound=None):
         num_leading_zeros, plain_coeffs = skip_leading_zeros_and_convert_to_bigints(polynomial)
         commitment:ProjectivePointG1 = MSM(
             powers[0][num_leading_zeros:],
             plain_coeffs,
-            params
         )
         randomness = Randomness.empty()
         if hiding_bound:
             randomness = Randomness.rand(hiding_bound)
 
         random_ints = convert_to_bigints(randomness.blind_poly)
-        random_commitment:ProjectivePointG1 = MSM(powers[1],random_ints,params)
+        random_commitment:ProjectivePointG1 = MSM(powers[1],random_ints)
         random_commitment_affine = random_commitment.to_affine()
         commitment = commitment.add_assign_mixed(random_commitment_affine)
         commitment_affine = commitment.to_affine()
@@ -56,7 +55,7 @@ class Commitment:
 # On input a list of labeled polynomials and a query point, `open` outputs a proof of evaluation
 # of the polynomials at the query point.
 def open(
-    ck: UniversalParams,
+    ck,
     labeled_polynomials: 'LabeledPoly',
     _commitments: 'LabeledCommitment',
     point,
@@ -79,8 +78,7 @@ def open(
         curr_challenge = opening_challenges(opening_challenge, opening_challenge_counter)
         opening_challenge_counter += 1
 
-    powers = [ck.powers_of_g,ck.powers_of_gamma_g]
-    proof = open_proof(powers, combined_polynomial, point, combined_rand)
+    proof = open_proof(ck, combined_polynomial, point, combined_rand)
     return proof
 
 dataclass
@@ -103,14 +101,6 @@ class LabeledPoly:
     def new(cls, label, hiding_bound, poly):
         return cls(label=label, hiding_bound=hiding_bound, poly=poly)
 
-
-    
-def commit_poly(ck:UniversalParams,polynomial,params):
-    random.seed(42)
-    hiding_bound = None
-    powers = [ck.powers_of_g,ck.powers_of_gamma_g]
-    comm,rand = Commitment.commit(powers,polynomial,hiding_bound,params)
-    return comm,rand
 
 def opening_challenges(opening_challenge: fr.Fr, pow):
     return opening_challenge.pow(pow)

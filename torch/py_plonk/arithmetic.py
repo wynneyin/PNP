@@ -327,7 +327,7 @@ def compute_first_lagrange_evaluation(
     res = z_h_eval.mul(denom_in)
     return res  
 
-def MSM(bases:list[AffinePointG1], scalars:list[fr.Fr], params):
+def MSM(bases:list[AffinePointG1], scalars:list[fr.Fr]):
     size = min(len(bases), len(scalars))
     fq_elem = bases[0].x
     scalars = scalars[:size]
@@ -336,7 +336,7 @@ def MSM(bases:list[AffinePointG1], scalars:list[fr.Fr], params):
 
     c = 3 if size < 32 else ln_without_floats(size) + 2
     num_bits = fr.Fr.MODULUS_BITS
-    fr_one = params.one()
+    fr_one = fr.Fr(value=fr.Fr.R)
     fr_one = fr_one.into_repr()
 
     zero:ProjectivePointG1 = ProjectivePointG1.zero(fq_elem)

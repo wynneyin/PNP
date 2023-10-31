@@ -33,7 +33,7 @@ class Randomness:
 
 def commit(powers,polynomial:list[fr.Fr],hiding_bound=None):
     num_leading_zeros, plain_coeffs = skip_leading_zeros_and_convert_to_bigints(polynomial)
-    commitment:ProjectivePointG1 = MSM(
+    any:ProjectivePointG1 = MSM(
         powers[0][num_leading_zeros:],
         plain_coeffs,
     )
@@ -42,18 +42,18 @@ def commit(powers,polynomial:list[fr.Fr],hiding_bound=None):
         randomness = Randomness.rand(hiding_bound)
 
     random_ints = convert_to_bigints(randomness.blind_poly)
-    random_commitment:ProjectivePointG1 = MSM(powers[1],random_ints)
-    random_commitment_affine = random_commitment.to_affine()
-    commitment = commitment.add_assign_mixed(random_commitment_affine)
-    commitment_affine = commitment.to_affine()
-    return commitment_affine, randomness
+    random_any:ProjectivePointG1 = MSM(powers[1],random_ints)
+    random_any_affine = random_any.to_affine()
+    any = any.add_assign_mixed(random_any_affine)
+    any_affine = any.to_affine()
+    return any_affine, randomness
     
 # On input a list of labeled polynomials and a query point, `open` outputs a proof of evaluation
 # of the polynomials at the query point.
 def open(
     ck,
     labeled_polynomials: 'LabeledPoly',
-    _commitments: 'LabeledCommitment',
+    _anys: 'Labeledany',
     point,
     opening_challenge: field,
     rands,
@@ -78,14 +78,14 @@ def open(
     return proof
 
 dataclass
-class LabeledCommitment:
-    def __init__(self,label,commitment):
+class Labeledany:
+    def __init__(self,label,any):
         self.label = label
-        self.commitment =commitment
+        self.any =any
 
     @classmethod
-    def new(cls,label,commitment):
-        return cls(label = label,commitment = commitment)
+    def new(cls,label,any):
+        return cls(label = label,any = any)
 
 class LabeledPoly:
     def __init__(self, label, hiding_bound, poly):
@@ -127,13 +127,13 @@ def open_with_witness_polynomial(
     hiding_witness_polynomial):
 
     num_leading_zeros, witness_coeffs =skip_leading_zeros_and_convert_to_bigints(witness_polynomial)
-    w = MSM(powers[0][num_leading_zeros:],witness_coeffs,point)
+    w = MSM(powers[0][num_leading_zeros:],witness_coeffs)
     random_v = None
     if hiding_witness_polynomial is not None:
         blinding_p = randomness.blind_poly
         blinding_evaluation = evaluate(blinding_p, point)
         random_witness_coeffs = convert_to_bigints(hiding_witness_polynomial)
-        random_commit = MSM(powers[1],random_witness_coeffs,point)
+        random_commit = MSM(powers[1],random_witness_coeffs)
         w = w.add_assign(random_commit)
         random_v = blinding_evaluation
     
@@ -152,56 +152,56 @@ def open_proof(powers, p: List[field], point: field, rand: Randomness):
     return proof
 @dataclass
 class Proof:
-    # Commitment to the witness polynomial for the left wires.
-    a_comm: Commitment
+    # any to the witness polynomial for the left wires.
+    a_comm: any
 
-    # Commitment to the witness polynomial for the right wires.
-    b_comm: Commitment
+    # any to the witness polynomial for the right wires.
+    b_comm: any
 
-    # Commitment to the witness polynomial for the output wires.
-    c_comm: Commitment
+    # any to the witness polynomial for the output wires.
+    c_comm: any
 
-    # Commitment to the witness polynomial for the fourth wires.
-    d_comm: Commitment
+    # any to the witness polynomial for the fourth wires.
+    d_comm: any
 
-    # Commitment to the permutation polynomial.
-    z_comm: Commitment
+    # any to the permutation polynomial.
+    z_comm: any
 
-    # Commitment to the lookup query polynomial.
-    f_comm: Commitment
+    # any to the lookup query polynomial.
+    f_comm: any
 
-    # Commitment to first half of sorted polynomial
-    h_1_comm: Commitment
+    # any to first half of sorted polynomial
+    h_1_comm: any
 
-    # Commitment to second half of sorted polynomial
-    h_2_comm: Commitment
+    # any to second half of sorted polynomial
+    h_2_comm: any
 
-    # Commitment to the lookup permutation polynomial.
-    z_2_comm: Commitment
+    # any to the lookup permutation polynomial.
+    z_2_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_1_comm: Commitment
+    # any to the quotient polynomial.
+    t_1_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_2_comm: Commitment
+    # any to the quotient polynomial.
+    t_2_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_3_comm: Commitment
+    # any to the quotient polynomial.
+    t_3_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_4_comm: Commitment
+    # any to the quotient polynomial.
+    t_4_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_5_comm: Commitment
+    # any to the quotient polynomial.
+    t_5_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_6_comm: Commitment
+    # any to the quotient polynomial.
+    t_6_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_7_comm: Commitment
+    # any to the quotient polynomial.
+    t_7_comm: any
 
-    # Commitment to the quotient polynomial.
-    t_8_comm: Commitment
+    # any to the quotient polynomial.
+    t_8_comm: any
 
     # Batch opening proof of the aggregated witnesses
     aw_opening: OpenProof

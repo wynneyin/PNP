@@ -18,7 +18,7 @@ struct AffinePoint {
     uint64_t y[4];
 };
 
-void NTT(uint64_t* vector, bool forward, uint32_t k);
+void NTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs);
 
 void MSM(uint64_t coeffs[][4], struct AffinePoint* base, struct ProjectPoint acc,struct ProjectPoint* result, uint64_t len);
 

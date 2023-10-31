@@ -106,7 +106,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
 
     # Commit to query polynomial
     f_poly_commit, _ = commit(powers,f_poly)
-    transcript.append(b"f",f_poly_commit.value)
+    transcript.append(b"f",f_poly_commit)
 
     # Compute s, as the sorted and concatenated version of f and t
     h_1, h_2 = multiset.combine_split(compressed_t_multiset, compressed_f_multiset)
@@ -165,7 +165,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     z_poly_commit,_ = commit(powers,z_poly)
 
     # Add permutation polynomial commitment to transcript.
-    transcript.append(b"z", z_2_poly_commit)
+    transcript.append(b"z", z_poly_commit)
     
     # Compute mega permutation polynomial.
     # Compute lookup permutation poly

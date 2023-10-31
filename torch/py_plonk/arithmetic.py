@@ -125,7 +125,12 @@ def NTT(domain,coeffs):
     zero = fr.Fr.zero()
     #add zero to resize
     resize_coeffs = resize(coeffs,domain.size,zero)
-    evals = operator(domain,resize_coeffs,domain.group_gen)
+    from_gmpy_list(resize_coeffs)
+    input = from_list_tensor(resize_coeffs)
+    output = torch.ntt_zkp(input)
+    evals = from_tensor_list(output)
+    from_list_gmpy(evals)
+    #evals = operator(domain,resize_coeffs,domain.group_gen)
     return evals
 
 def INTT(domain,evals):

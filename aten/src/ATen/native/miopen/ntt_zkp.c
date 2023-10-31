@@ -46,6 +46,8 @@ const int MODULUS_BITS_r = 255;
 
 const int TWO_ADICIT_r = 32;
 
+const int Limbs_r = 4;
+
 const int CAPACITY_r = MODULUS_BITS_r - 1;
 
 const int REPR_SHAVE_BITS_r = 1;
@@ -104,6 +106,8 @@ const uint64_t INV_q= 0x87d20782e4866389;
 const int MODULUS_BITS_q = 381;
 
 const int TWO_ADICIT_q = 1;
+
+const int Limbs_q = 6;
 
 const int CAPACITY_q = MODULUS_BITS_q - 1;
 
@@ -503,8 +507,10 @@ void invert(uint64_t* self, const uint64_t* exp, uint64_t* res, const uint64_t* 
 }
 
 
-void NTT(uint64_t* vector, bool forward, uint32_t k){
-    uint64_t N=1<<k;
+void NTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
+
+    uint64_t N = N_times_Limbs / Limbs_r;
+    int k = log2(N);
     for(uint64_t i=0; i<N; i++){
         uint64_t rk = reverse_bits(i, k);
         if (i < rk){

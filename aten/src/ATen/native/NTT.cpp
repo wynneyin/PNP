@@ -90,18 +90,15 @@ namespace native {
 
 Tensor ntt_zkp_cpu(const Tensor& input) {
     auto out_sizes = input.numel();
-    uint32_t log_size = uint32_t(log2(out_sizes));
     auto ptr = input.mutable_data_ptr<uint64_t>();
-    NTT(ptr, true, log_size);
+    NTT(ptr, true, out_sizes);
     return input;
 }
 
 Tensor intt_zkp_cpu(const Tensor& input) {
-    auto out_sizes = input.numel()/4;
-    uint32_t log_size = uint32_t(log2(out_sizes));
+    auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
-    
-    NTT(ptr, false, log_size);
+    NTT(ptr, false, out_sizes);
 
     return input;
 }

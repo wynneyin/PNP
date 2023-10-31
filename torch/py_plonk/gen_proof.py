@@ -63,11 +63,13 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     transcript.append(b"zeta",zeta)
 
     # Compress lookup table into vector of single elements
-    t_multiset = multiset.MultiSet([pk.lookup.table_1,pk.lookup.table_2,
-                           pk.lookup.table_3,pk.lookup.table_4])
-    compressed_t_multiset = t_multiset.compress(zeta)
+    # t_multiset = multiset.MultiSet([pk.lookup.table_1,pk.lookup.table_2,
+    #                        pk.lookup.table_3,pk.lookup.table_4])
+    t_multiset = [pk.lookup.table_1,pk.lookup.table_2,
+                  pk.lookup.table_3,pk.lookup.table_4]
+    compressed_t_multiset = multiset.compress(t_multiset, zeta)
     #Compute table poly
-    compressed_t_poly = INTT(domain,compressed_t_multiset.elements)
+    compressed_t_poly = INTT(domain,compressed_t_multiset)
     table_poly = from_coeff_vec(compressed_t_poly)
 
     # Compute query table f
@@ -81,23 +83,23 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     q_lookup_pad = [fr.Fr(value=gmpy2.mpz(0)) for _ in  range((n - len(cs.q_lookup)))]
     padded_q_lookup = cs.q_lookup + q_lookup_pad
 
-    f_scalars = multiset.MultiSet([[],[],[],[]])
+    f_scalars = [[],[],[],[]]
     for q_lookup, w_l, w_r, w_o, w_4 in zip(padded_q_lookup, w_l_scalar, w_r_scalar, w_o_scalar, w_4_scalar):
         if q_lookup.value == 0:
-            f_scalars.elements[0].append(compressed_t_multiset.elements[0])
+            f_scalars[0].append(compressed_t_multiset[0])
             for key in range(1,4):
-                    f_scalars.elements[key].append(fr.Fr(gmpy2.mpz(0)))  
+                    f_scalars[key].append(fr.Fr(gmpy2.mpz(0)))  
         else:
-            f_scalars.elements[0].append(w_l)
-            f_scalars.elements[1].append(w_r)
-            f_scalars.elements[2].append(w_o)
-            f_scalars.elements[3].append(w_4)
+            f_scalars[0].append(w_l)
+            f_scalars[1].append(w_r)
+            f_scalars[2].append(w_o)
+            f_scalars[3].append(w_4)
 
     # Compress all wires into a single vector
-    compressed_f_multiset = f_scalars.compress(zeta)
+    compressed_f_multiset = multiset.compress(f_scalars, zeta)
 
     # Compute query poly
-    compressed_f_poly = INTT(domain,compressed_f_multiset.elements)
+    compressed_f_poly = INTT(domain,compressed_f_multiset)
     f_poly = from_coeff_vec(compressed_f_poly)
     # f_polys = [kzg10.LabeledPoly.new(label="f_poly",hiding_bound=None,poly=f_poly)]
 
@@ -106,7 +108,7 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     transcript.append(b"f",f_poly_commit.value)
 
     # Compute s, as the sorted and concatenated version of f and t
-    h_1, h_2 = compressed_t_multiset.combine_split(compressed_f_multiset)
+    h_1, h_2 = multiset.combine_split(compressed_t_multiset, compressed_f_multiset)
 
     # Compute h polys
     h_1_temp = INTT(domain,h_1)

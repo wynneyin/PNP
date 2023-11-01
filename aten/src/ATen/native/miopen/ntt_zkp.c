@@ -34,6 +34,8 @@ uint64_t omega12_inv[4]={
     5362466006817758141
 };
 
+uint64_t size_inv_12[4]={0, 0, 0, 18014398509481984};
+
 const uint64_t MODULUS_r[4] = { 
     0xffffffff00000001,
     0x53bda402fffe5bfe,
@@ -556,6 +558,16 @@ void NTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
     }
     free(twiddles);
 }
+
+void iNTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
+    uint32_t N = N_times_Limbs / Limbs_r;
+    NTT(vector,forward,N_times_Limbs);
+    for(uint32_t i = 0; i < N; i++){
+        group_scale(vector+i*Limbs_r, size_inv_12, vector+i*Limbs_r);
+    }
+
+}
+
 
 //rescale to Mongomery form
 void from_raw(uint64_t* val, uint64_t* result, const uint64_t* R2, const uint64_t INV, const uint64_t* MODULUS){

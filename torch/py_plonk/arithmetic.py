@@ -143,8 +143,8 @@ def INTT(domain,evals):
     output = torch.intt_zkp(input)
     coeffs = from_tensor_list(output)
     from_list_gmpy(coeffs)
-    for i in range(len(coeffs)):
-        coeffs[i] = coeffs[i].mul(domain.size_inv)
+    # for i in range(len(coeffs)):
+    #     coeffs[i] = coeffs[i].mul(domain.size_inv)
     return coeffs
 
 # Compute a NTT over a coset of the domain, modifying the input vector in place.

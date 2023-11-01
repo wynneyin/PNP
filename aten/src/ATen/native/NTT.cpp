@@ -98,7 +98,7 @@ Tensor ntt_zkp_cpu(const Tensor& input) {
 Tensor intt_zkp_cpu(const Tensor& input) {
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
-    NTT(ptr, false, out_sizes);
+    iNTT(ptr, false, out_sizes);
 
     return input;
 }

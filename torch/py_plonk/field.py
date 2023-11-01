@@ -14,6 +14,7 @@ class field:
     @classmethod
     def zero_in_list(cls):
         return cls([0,0,0,0])
+    
     # Return the Multiplicative identity
     def one(self):
         cls = type(self)

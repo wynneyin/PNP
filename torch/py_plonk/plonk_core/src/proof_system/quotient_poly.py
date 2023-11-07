@@ -1,7 +1,7 @@
 from ....domain import Radix2EvaluationDomain
 import gmpy2
 from ....bls12_381 import fr
-from ....arithmetic import INTT,coset_NTT,coset_INTT,from_coeff_vec
+from ....arithmetic import INTT,coset_NTT,coset_INTT,from_coeff_vec,resize,is_zero_poly
 from ....plonk_core.src.proof_system.widget.mod import WitnessValues
 from ....plonk_core.src.proof_system.widget.range import RangeGate,RangeValues
 from ....plonk_core.src.proof_system.widget.logic import LogicGate,LogicValues
@@ -160,18 +160,33 @@ def compute(domain: Radix2EvaluationDomain,
     w4_eval_8n = coset_NTT(w_4_poly,domain_8n)
     w4_eval_8n += w4_eval_8n[:8]
 
-    z2_eval_8n = coset_NTT(z2_poly,domain_8n)
+    if is_zero_poly(z2_poly):
+        z2_eval_8n = resize(z2_poly,domain_8n.size,fr.Fr.zero())
+    else:
+        z2_eval_8n = coset_NTT(z2_poly,domain_8n)
     z2_eval_8n +=z2_eval_8n[:8]
 
-    f_eval_8n = coset_NTT(f_poly,domain_8n)
+    if is_zero_poly(f_poly):
+        f_eval_8n = resize(f_poly,domain_8n.size,fr.Fr.zero())
+    else:
+        f_eval_8n = coset_NTT(f_poly,domain_8n)
 
-    table_eval_8n = coset_NTT(table_poly,domain_8n)
+    if is_zero_poly(table_poly):
+        table_eval_8n = resize(table_poly,domain_8n.size,fr.Fr.zero())
+    else:
+        table_eval_8n = coset_NTT(table_poly,domain_8n)
     table_eval_8n += table_eval_8n[:8]
 
-    h1_eval_8n = coset_NTT(h1_poly,domain_8n)
+    if is_zero_poly(h1_poly):
+        h1_eval_8n = resize(h1_poly,domain_8n.size,fr.Fr.zero())
+    else:
+        h1_eval_8n = coset_NTT(h1_poly,domain_8n)
     h1_eval_8n += h1_eval_8n[:8]
 
-    h2_eval_8n = coset_NTT(h2_poly,domain_8n)
+    if is_zero_poly(h2_poly):
+        h2_eval_8n = resize(h2_poly,domain_8n.size,fr.Fr.zero())
+    else:
+        h2_eval_8n = coset_NTT(h2_poly,domain_8n)
 
     gate_constraints = compute_gate_constraint_satisfiability(
         domain,

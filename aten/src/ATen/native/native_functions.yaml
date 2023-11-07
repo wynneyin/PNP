@@ -4896,6 +4896,16 @@
   dispatch:
     CPU: intt_zkp_cpu
 
+- func: coset_ntt_zkp(Tensor self) -> Tensor
+  device_check: NoCheck   # TensorIterator
+  dispatch:
+    CPU: coset_ntt_zkp_cpu
+
+- func: coset_intt_zkp(Tensor self) -> Tensor
+  device_check: NoCheck   # TensorIterator
+  dispatch:
+    CPU: coset_intt_zkp_cpu
+
 - func: relu6(Tensor self) -> Tensor
   python_module: nn
 

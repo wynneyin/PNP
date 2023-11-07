@@ -102,4 +102,20 @@ Tensor intt_zkp_cpu(const Tensor& input) {
 
     return input;
 }
+
+Tensor coset_ntt_zkp_cpu(const Tensor& input) {
+    auto out_sizes = input.numel();
+    auto ptr = input.mutable_data_ptr<uint64_t>();
+    NTT_coset(ptr, true, out_sizes);
+    return input;
+}
+
+Tensor coset_intt_zkp_cpu(const Tensor& input) {
+    auto out_sizes = input.numel();
+    auto ptr = input.mutable_data_ptr<uint64_t>();
+    iNTT_coset(ptr, false, out_sizes);
+
+    return input;
+}
+
 }}  // namespace at::native

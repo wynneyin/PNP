@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <math.h>
-
+#include <iostream>
 typedef __uint128_t uint128_t;
 #define ARRAY_SIZE 8
 
@@ -21,20 +21,43 @@ struct AffinePoint {
     uint64_t y[4];
 };
 
-uint64_t omega12[4]={
+uint64_t omega10[4]={
     11864420382399758890,
     18195565927427728881,
     16759393787988053888,
     8029136087195778842
 };
-uint64_t omega12_inv[4]={
+uint64_t omega10_inv[4]={
     3122910594386215040,
     685422923818215260,
     1617402986054825192,
     5362466006817758141
 };
 
-uint64_t size_inv_12[4]={0, 0, 0, 18014398509481984};
+uint64_t omega10_coset[4]={
+    11762601369654853577,
+    4754331843865155954,
+    458560669857420187,
+    8204223352538390613
+};
+
+uint64_t omega10_inv_coset[4]={
+    5800001874483830389,
+    16965619609244388378,
+    6936327223020705784,
+    2600221238559039842
+};
+
+uint64_t generator10_inv[4]={
+    15811494917868205788,
+    16624336857528583898,
+    17920762862402342329,
+    7408687358795335574
+};
+
+uint64_t size_inv_10[4]={0, 0, 0, 18014398509481984};
+
+uint64_t size_inv_10_coset[4]={0, 0, 0, 2251799813685248};
 
 const uint64_t MODULUS_r[4] = { 
     0xffffffff00000001,
@@ -526,7 +549,57 @@ void NTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
 		//为每列分配4个uint64_t大小的空间
 		twiddles[i] = (uint64_t*)malloc(sizeof(uint64_t)*4); 
 	}  
-    precompute_twiddles(twiddles,forward?omega12:omega12_inv,N);
+    precompute_twiddles(twiddles,forward?omega10:omega10_inv,N);
+    uint64_t chunk=2;
+    uint64_t twiddle_chunk = N / 2;
+    for(uint32_t i=0;i<k;i++){
+        for(uint64_t j=0;j<N;j+=chunk){
+            uint64_t* Left=vector+j*4;
+            uint64_t* Right=vector+(j+chunk/2)*4;
+            uint64_t t[4];
+            u64_to_u64(t,Right);    //取出Right[0]
+            u64_to_u64(Right,Left); //Right[0]=Left[0]
+            group_add(Left,t,Left);
+            group_sub(Right,t,Right);
+            for(uint64_t m=0;m<chunk/2-1;m++){   //最底层，chunk=2时不进入该循环
+                uint64_t* Left_addr=vector+(j+m+1)*4;
+                uint64_t* Right_addr=vector+(j+chunk/2+m+1)*4;
+                uint64_t* twiddle=twiddles[(m+1)*twiddle_chunk];
+                uint64_t t1[4];
+                group_scale(Right_addr,twiddle,t1); //b*w
+                u64_to_u64(Right_addr,Left_addr);
+                group_add(Left_addr,t1,Left_addr); //a+b*w
+                group_sub(Right_addr,t1,Right_addr); //a-b*w     
+            }  
+        }
+    chunk *= 2; // 向上合并
+    twiddle_chunk /= 2;
+    }
+    //recursive_butterfly(vector,N,1,twiddles);
+    for (uint64_t i = 0; i < N/2; i++){
+        free(twiddles[i]);
+    }
+    free(twiddles);
+}
+
+void NTT_coset(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
+
+    uint64_t N = N_times_Limbs / Limbs_r;
+    int k = log2(N);
+    for(uint64_t i=0; i<N; i++){
+        uint64_t rk = reverse_bits(i, k);
+        if (i < rk){
+            swap(vector+rk*4,vector+i*4);
+        }
+    }
+    uint64_t** twiddles;
+    twiddles = (uint64_t**)malloc(sizeof(uint64_t*)*(N/2));//为二维数组分配n行
+    for (uint64_t i=0; i<N/2; i++)
+	{
+		//为每列分配4个uint64_t大小的空间
+		twiddles[i] = (uint64_t*)malloc(sizeof(uint64_t)*4); 
+	}  
+    precompute_twiddles(twiddles,forward?omega10_coset:omega10_inv_coset,N);
     uint64_t chunk=2;
     uint64_t twiddle_chunk = N / 2;
     for(uint32_t i=0;i<k;i++){
@@ -563,11 +636,21 @@ void iNTT(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
     uint32_t N = N_times_Limbs / Limbs_r;
     NTT(vector,forward,N_times_Limbs);
     for(uint32_t i = 0; i < N; i++){
-        group_scale(vector+i*Limbs_r, size_inv_12, vector+i*Limbs_r);
+        group_scale(vector+i*Limbs_r, size_inv_10, vector+i*Limbs_r);
     }
-
 }
 
+void iNTT_coset(uint64_t* vector, bool forward, uint32_t N_times_Limbs){
+    uint32_t N = N_times_Limbs / Limbs_r;
+    NTT_coset(vector,forward,N_times_Limbs);
+    uint64_t pow[4];
+    u64_to_u64(pow,size_inv_10_coset);
+    for (uint32_t i = 0; i < N; i++){
+        group_scale(vector+i*Limbs_r, pow, vector+i*Limbs_r);
+        group_scale(pow,generator10_inv,pow);
+    }
+   
+}
 
 //rescale to Mongomery form
 void from_raw(uint64_t* val, uint64_t* result, const uint64_t* R2, const uint64_t INV, const uint64_t* MODULUS){

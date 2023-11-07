@@ -1,5 +1,6 @@
 import copy
 import torch
+import gmpy2
 from .bls12_381 import fr,fq
 from .domain import Radix2EvaluationDomain
 from .structure import AffinePointG1
@@ -90,6 +91,14 @@ def skip_leading_zeros_and_convert_to_bigints(p: list[fr.Fr]):
     coeffs = convert_to_bigints(p[num_leading_zeros:])
     return num_leading_zeros, coeffs
 
+def is_zero_poly(input:list):
+    flag = True
+    for i in range(len(input)):
+        flag = flag & (input[i].value == 0)
+        if not flag:
+            break 
+    return flag
+
 def from_list_tensor(input:list):
     base_input=[]
     for i in range(len(input)):
@@ -98,10 +107,7 @@ def from_list_tensor(input:list):
     return output
 
 def from_tensor_list(input:torch.Tensor):
-    base_output = input.tolist()
-    output = []
-    for i in range(len(base_output)):
-        output.append(base_output[i])
+    output = input.tolist()
     return output
     
 def from_list_gmpy(input:list):
@@ -110,7 +116,7 @@ def from_list_gmpy(input:list):
         for j in reversed(input[i]):
             output = output<<64
             output = output | j
-        input[i] =  fr.Fr(value=output)
+        input[i] =  fr.Fr(value = gmpy2.mpz(output))
 
 def from_gmpy_list(input:list):
     for i in range(len(input)):
@@ -151,7 +157,15 @@ def INTT(domain,evals):
 def coset_NTT(coeffs:list[fr.Fr], domain):
     modified_coeffs = coeffs[:]
     distribute_powers(modified_coeffs, fr.Fr.GENERATOR)
-    evals = NTT(domain,modified_coeffs)
+    zero = fr.Fr.zero()
+    #add zero to resize
+    resize_coeffs = resize(modified_coeffs,domain.size,zero)
+    from_gmpy_list(resize_coeffs)
+    input = from_list_tensor(resize_coeffs)
+    output = torch.coset_ntt_zkp(input)
+    evals = from_tensor_list(output)
+    from_list_gmpy(evals)
+    #evals = NTT(domain,modified_coeffs)
     return evals
 
 # Compute a INTT over a coset of the domain, modifying the input vector in place.
@@ -159,9 +173,15 @@ def coset_INTT(evals:list[fr.Fr], domain):
     #add zero to resize
     zero = fr.Fr.zero()
     resize_evals = resize(evals,domain.size,zero)
-    evals = operator(domain,resize_evals,domain.group_gen_inv)
-    distribute_powers_and_mul_by_const(evals, domain.generator_inv,domain.size_inv)
-    return evals
+    from_gmpy_list(resize_evals)
+    input = from_list_tensor(resize_evals)
+    # evals = operator(domain,resize_evals,domain.group_gen_inv)
+    output = torch.coset_intt_zkp(input)
+    coeffs = from_tensor_list(output)
+    from_list_gmpy(coeffs)
+    #evals = operator(domain,resize_evals,domain.group_gen_inv)
+    #distribute_powers_and_mul_by_const(evals, domain.generator_inv,domain.size_inv)
+    return coeffs
 
 def from_coeff_vec(coeffs:list):
     result = coeffs[:]

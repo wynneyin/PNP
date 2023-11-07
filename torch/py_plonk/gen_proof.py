@@ -1,4 +1,5 @@
 import gmpy2
+import copy
 import itertools
 from .domain import Radix2EvaluationDomain
 from .transcript import transcript
@@ -10,7 +11,7 @@ from .plonk_core.src.proof_system.prover_key import Prover_Key
 from .plonk_core.src.proof_system.pi import into_dense_poly
 from .plonk_core.src.proof_system import quotient_poly
 from .plonk_core.src.proof_system import linearisation_poly
-from .arithmetic import INTT,from_coeff_vec,resize
+from .arithmetic import INTT,from_coeff_vec,resize,is_zero_poly
 from .load import read_scalar_data
 from .KZG import kzg10
 from .KZG.kzg10 import commit
@@ -70,7 +71,11 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                   pk.lookup.table_3,pk.lookup.table_4]
     compressed_t_multiset = multiset.compress(t_multiset, zeta)
     #Compute table poly
-    compressed_t_poly = INTT(domain,compressed_t_multiset)
+    flag_t = is_zero_poly(compressed_t_multiset)
+    if flag_t:
+        compressed_t_poly = copy.deepcopy(compressed_t_multiset)
+    else:
+        compressed_t_poly = INTT(domain,compressed_t_multiset)
     table_poly = from_coeff_vec(compressed_t_poly)
 
     # Compute query table f
@@ -100,7 +105,11 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     compressed_f_multiset = multiset.compress(f_scalars, zeta)
 
     # Compute query poly
-    compressed_f_poly = INTT(domain,compressed_f_multiset)
+    flag_f = is_zero_poly(compressed_f_multiset)
+    if flag_f:
+        compressed_f_poly = copy.deepcopy(compressed_f_multiset)
+    else:
+        compressed_f_poly = INTT(domain,compressed_f_multiset)
     f_poly = from_coeff_vec(compressed_f_poly)
     # f_polys = [kzg10.LabeledPoly.new(label="f_poly",hiding_bound=None,poly=f_poly)]
 
@@ -112,8 +121,17 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     h_1, h_2 = multiset.combine_split(compressed_t_multiset, compressed_f_multiset)
 
     # Compute h polys
-    h_1_temp = INTT(domain,h_1)
-    h_2_temp = INTT(domain,h_2)
+    flag_h_1 = is_zero_poly(h_1)
+    flag_h_2 = is_zero_poly(h_2)
+    if flag_h_1:
+        h_1_temp = copy.deepcopy(h_1)
+    else:
+        h_1_temp = INTT(domain,h_1)
+    if flag_h_2:
+        h_2_temp = copy.deepcopy(h_2)
+    else:
+        h_2_temp = INTT(domain,h_2)
+
     h_1_poly = from_coeff_vec(h_1_temp)
     h_2_poly = from_coeff_vec(h_2_temp)
 

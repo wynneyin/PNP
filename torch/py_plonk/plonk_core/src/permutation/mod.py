@@ -1,7 +1,8 @@
 from ....plonk_core.src.permutation import constants
-from ....arithmetic import NTT,INTT,from_coeff_vec
+from ....arithmetic import NTT,INTT,from_coeff_vec,is_zero_poly
 from ....bls12_381 import fr
 import math
+import copy
 
 def numerator_irreducible(root, w, k, beta, gamma):
     mid1 = beta.mul(k)
@@ -148,7 +149,11 @@ def compute_lookup_permutation_poly(domain, f, t, h_1, h_2, delta, epsilon):
         p.append(state)
     
     p.pop()
-    p_poly = INTT(domain,p)
+    flag_z_2 = is_zero_poly(p)
+    if flag_z_2:
+        p_poly = copy.deepcopy(p)
+    else:
+        p_poly = INTT(domain,p)
     p_poly = from_coeff_vec(p_poly)
     
     return p_poly

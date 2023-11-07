@@ -108,6 +108,8 @@ full_codegen:
   - relu
   - ntt_zkp
   - intt_zkp
+  - coset_ntt_zkp
+  - coset_intt_zkp
   - remainder.Tensor
   - repeat
   - rsqrt

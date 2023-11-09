@@ -54,6 +54,7 @@ class Arith:
         c_eval: fr.Fr, 
         d_eval: fr.Fr, 
         q_arith_eval: fr.Fr):
+        
         mid1_1 = a_eval.mul(b_eval)
         mid1 = poly_mul_const(self.q_m[0] ,mid1_1)
         mid2 = poly_mul_const(self.q_l[0] ,a_eval)

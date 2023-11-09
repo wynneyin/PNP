@@ -2,7 +2,6 @@ import copy
 import torch
 import gmpy2
 from .bls12_381 import fr,fq
-from .domain import Radix2EvaluationDomain
 from .structure import AffinePointG1
 from .jacobian import ProjectivePointG1
 import math
@@ -21,7 +20,7 @@ def derange(xi, log_len):
             xi[idx], xi[ridx] = xi[ridx], xi[idx]
     return xi
 
-def precompute_twiddles(domain:Radix2EvaluationDomain, root:fr.Fr):
+def precompute_twiddles(domain, root:fr.Fr):
     log_size = int(math.log2(domain.size))
     powers = [root.zero()] * (1 << (log_size - 1))
     powers[0] = root.one()
@@ -29,7 +28,7 @@ def precompute_twiddles(domain:Radix2EvaluationDomain, root:fr.Fr):
         powers[idx] = powers[idx - 1].mul(root)
     return powers
 
-def operator(domain:Radix2EvaluationDomain, xi:list[fr.Fr], root:fr.Fr):
+def operator(domain, xi:list[fr.Fr], root:fr.Fr):
     log_size = int(math.log2(domain.size))
     xi = derange(xi,log_size)
     twiddles=precompute_twiddles(domain,root)
@@ -127,30 +126,22 @@ def from_gmpy_list(input:list):
         input[i] = fr.Fr(value = output)
 
 
-def NTT(domain,coeffs):
-    zero = fr.Fr.zero()
-    #add zero to resize
-    resize_coeffs = resize(coeffs,domain.size,zero)
+def NTT(coeffs):
+    resize_coeffs = copy.deepcopy(coeffs)
     from_gmpy_list(resize_coeffs)
     input = from_list_tensor(resize_coeffs)
     output = torch.ntt_zkp(input)
     evals = from_tensor_list(output)
     from_list_gmpy(evals)
-    #evals = operator(domain,resize_coeffs,domain.group_gen)
     return evals
 
-def INTT(domain,evals):
-    #add zero to resize
-    zero = fr.Fr.zero()
-    resize_evals = resize(evals,domain.size,zero)
+def INTT(evals):
+    resize_evals = copy.deepcopy(evals)
     from_gmpy_list(resize_evals)
     input = from_list_tensor(resize_evals)
-    # evals = operator(domain,resize_evals,domain.group_gen_inv)
     output = torch.intt_zkp(input)
     coeffs = from_tensor_list(output)
     from_list_gmpy(coeffs)
-    # for i in range(len(coeffs)):
-    #     coeffs[i] = coeffs[i].mul(domain.size_inv)
     return coeffs
 
 # Compute a NTT over a coset of the domain, modifying the input vector in place.
@@ -159,28 +150,24 @@ def coset_NTT(coeffs:list[fr.Fr], domain):
     distribute_powers(modified_coeffs, fr.Fr.GENERATOR)
     zero = fr.Fr.zero()
     #add zero to resize
-    resize_coeffs = resize(modified_coeffs,domain.size,zero)
+    resize_coeffs = resize(modified_coeffs,domain["size"],zero)
     from_gmpy_list(resize_coeffs)
     input = from_list_tensor(resize_coeffs)
     output = torch.coset_ntt_zkp(input)
     evals = from_tensor_list(output)
     from_list_gmpy(evals)
-    #evals = NTT(domain,modified_coeffs)
     return evals
 
 # Compute a INTT over a coset of the domain, modifying the input vector in place.
 def coset_INTT(evals:list[fr.Fr], domain):
     #add zero to resize
     zero = fr.Fr.zero()
-    resize_evals = resize(evals,domain.size,zero)
+    resize_evals = resize(evals,domain["size"],zero)
     from_gmpy_list(resize_evals)
     input = from_list_tensor(resize_evals)
-    # evals = operator(domain,resize_evals,domain.group_gen_inv)
     output = torch.coset_intt_zkp(input)
     coeffs = from_tensor_list(output)
     from_list_gmpy(coeffs)
-    #evals = operator(domain,resize_evals,domain.group_gen_inv)
-    #distribute_powers_and_mul_by_const(evals, domain.generator_inv,domain.size_inv)
     return coeffs
 
 def from_coeff_vec(coeffs:list):
@@ -343,9 +330,10 @@ def batch_inversion(v: list[fr.Fr]):
 # to obtain the expression:
 # L_0(X) = (X^n - 1) / n * (X - 1)
 def compute_first_lagrange_evaluation(
-    domain: Radix2EvaluationDomain, z_h_eval: fr.Fr, z_challenge: fr.Fr):
+    domain, z_h_eval: fr.Fr, z_challenge: fr.Fr):
+
     one = z_challenge.one()
-    n_fr = fr.Fr.from_repr(domain.size)  
+    n_fr = fr.Fr.from_repr(domain["size"])  
     z_challenge_sub_one = z_challenge.sub(one)
     denom = n_fr.mul(z_challenge_sub_one)
     denom_in = fr.Fr.inverse(denom)

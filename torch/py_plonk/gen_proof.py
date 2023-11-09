@@ -1,7 +1,7 @@
 import gmpy2
 import copy
 import itertools
-from .domain import Radix2EvaluationDomain
+from .domain import newdomain,element
 from .transcript import transcript
 from .composer import StandardComposer
 from .transcript import transcript
@@ -22,20 +22,20 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     #init Fr params (FFTfield)
     Fr=fr.Fr(value = gmpy2.mpz(0))
     #get FFT domaim
-    domain=Radix2EvaluationDomain.new(cs.circuit_bound(),Fr)
-    n=domain.size
+    domain = newdomain(cs.circuit_bound())
+    n = domain["size"]
     transcript.append_pi(b"pi")
     powers = [pp.powers_of_g, pp.powers_of_gamma_g]
     #1. Compute witness Polynomials
-    w_l_scalar=read_scalar_data("/home/zhiyuan/tensorZK/torch/py_plonk/w_l_scalar.txt")
-    w_r_scalar=read_scalar_data("/home/zhiyuan/tensorZK/torch/py_plonk/w_r_scalar.txt")
-    w_o_scalar=read_scalar_data("/home/zhiyuan/tensorZK/torch/py_plonk/w_o_scalar.txt")
-    w_4_scalar=read_scalar_data("/home/zhiyuan/tensorZK/torch/py_plonk/w_4_scalar.txt")
+    w_l_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_l_scalar.txt")
+    w_r_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_r_scalar.txt")
+    w_o_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_o_scalar.txt")
+    w_4_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_4_scalar.txt")
 
-    w_l_poly = from_coeff_vec(INTT(domain,w_l_scalar))
-    w_r_poly = from_coeff_vec(INTT(domain,w_r_scalar))
-    w_o_poly = from_coeff_vec(INTT(domain,w_o_scalar))
-    w_4_poly = from_coeff_vec(INTT(domain,w_4_scalar))
+    w_l_poly = from_coeff_vec(INTT(w_l_scalar))
+    w_r_poly = from_coeff_vec(INTT(w_r_scalar))
+    w_o_poly = from_coeff_vec(INTT(w_o_scalar))
+    w_4_poly = from_coeff_vec(INTT(w_4_scalar))
 
     w_polys = [w_l_poly,w_r_poly,w_o_poly,w_4_poly]
     
@@ -65,17 +65,16 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     transcript.append(b"zeta",zeta)
 
     # Compress lookup table into vector of single elements
-    # t_multiset = multiset.MultiSet([pk.lookup.table_1,pk.lookup.table_2,
-    #                        pk.lookup.table_3,pk.lookup.table_4])
     t_multiset = [pk.lookup.table_1,pk.lookup.table_2,
                   pk.lookup.table_3,pk.lookup.table_4]
     compressed_t_multiset = multiset.compress(t_multiset, zeta)
+
     #Compute table poly
     flag_t = is_zero_poly(compressed_t_multiset)
     if flag_t:
         compressed_t_poly = copy.deepcopy(compressed_t_multiset)
     else:
-        compressed_t_poly = INTT(domain,compressed_t_multiset)
+        compressed_t_poly = INTT(compressed_t_multiset)
     table_poly = from_coeff_vec(compressed_t_poly)
 
     # Compute query table f
@@ -109,9 +108,8 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     if flag_f:
         compressed_f_poly = copy.deepcopy(compressed_f_multiset)
     else:
-        compressed_f_poly = INTT(domain,compressed_f_multiset)
+        compressed_f_poly = INTT(compressed_f_multiset)
     f_poly = from_coeff_vec(compressed_f_poly)
-    # f_polys = [kzg10.LabeledPoly.new(label="f_poly",hiding_bound=None,poly=f_poly)]
 
     # Commit to query polynomial
     f_poly_commit, _ = commit(powers,f_poly)
@@ -126,18 +124,16 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     if flag_h_1:
         h_1_temp = copy.deepcopy(h_1)
     else:
-        h_1_temp = INTT(domain,h_1)
+        h_1_temp = INTT(h_1)
     if flag_h_2:
         h_2_temp = copy.deepcopy(h_2)
     else:
-        h_2_temp = INTT(domain,h_2)
+        h_2_temp = INTT(h_2)
 
     h_1_poly = from_coeff_vec(h_1_temp)
     h_2_poly = from_coeff_vec(h_2_temp)
 
     # Commit to h polys
-    # h_1_polys = [kzg10.LabeledPoly.new(label="h_1_poly",hiding_bound=None,poly=h_1_poly)]
-    # h_2_polys = [kzg10.LabeledPoly.new(label="h_1_poly",hiding_bound=None,poly=h_2_poly)]
     h_1_poly_commit,_ = commit(powers,h_1_poly)
     h_2_poly_commit,_ = commit(powers,h_2_poly)
 
@@ -179,7 +175,6 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
             pk.permutation.fourth_sigma[0]
         ))
     # Commit to permutation polynomial.
-    # z_polys = [kzg10.LabeledPoly.new(label="z_poly",hiding_bound=None,poly=z_poly)]
     z_poly_commit,_ = commit(powers,z_poly)
 
     # Add permutation polynomial commitment to transcript.
@@ -198,11 +193,10 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     )
 
     # Commit to lookup permutation polynomial.
-    # z_2_polys = [kzg10.LabeledPoly.new(label="z_2_poly",hiding_bound=None,poly=z_2_poly)]
     z_2_poly_commit,_ = commit(powers,z_2_poly)
 
     # 3. Compute public inputs polynomial
-    pi_poly = into_dense_poly(cs.public_inputs,cs.intended_pi_pos,n,Fr)
+    pi_poly = into_dense_poly(cs.public_inputs,cs.intended_pi_pos,n)
 
     # 4. Compute quotient polynomial
 
@@ -239,16 +233,6 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
 
     t_i_poly = split_tx_poly(n, t_poly)
 
-    # t_i_polys = [kzg10.LabeledPoly.new(label="t_i_polys[0]",hiding_bound=None,poly=t_i_poly[0]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[1]",hiding_bound=None,poly=t_i_poly[1]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[2]",hiding_bound=None,poly=t_i_poly[2]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[3]",hiding_bound=None,poly=t_i_poly[3]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[4]",hiding_bound=None,poly=t_i_poly[4]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[5]",hiding_bound=None,poly=t_i_poly[5]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[6]",hiding_bound=None,poly=t_i_poly[6]),
-    #              kzg10.LabeledPoly.new(label="t_i_polys[7]",hiding_bound=None,poly=t_i_poly[7])]
-    
-    # t_commits, _ = kzg10.commit_poly(pp,t_i_polys,Fr)
     t_1_commits, _ = commit(powers,t_i_poly[0])
     t_2_commits, _ = commit(powers,t_i_poly[1])
     t_3_commits, _ = commit(powers,t_i_poly[2])
@@ -339,14 +323,6 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     # opening poly. It is being left in for now but it may not
     # be necessary. Warrants further investigation.
     # Ditto with the out_sigma poly.
-
-    # aw_polys = [kzg10.LabeledPoly.new(label="lin_poly",hiding_bound=None,poly=lin_poly),
-    #             kzg10.LabeledPoly.new(label="prover_key.permutation.left_sigma.0.clone()",hiding_bound=None,poly=pk.permutation.left_sigma[0]),
-    #             kzg10.LabeledPoly.new(label="prover_key.permutation.right_sigma.0.clone()",hiding_bound=None,poly=pk.permutation.right_sigma[0]),
-    #             kzg10.LabeledPoly.new(label="prover_key.permutation.out_sigma.0.clone()",hiding_bound=None,poly=pk.permutation.out_sigma[0]),
-    #             kzg10.LabeledPoly.new(label="f_poly",hiding_bound=None,poly=f_poly),
-    #             kzg10.LabeledPoly.new(label="h_2_poly",hiding_bound=None,poly=h_2_poly),
-    #             kzg10.LabeledPoly.new(label="table_poly",hiding_bound=None,poly=table_poly)]
     
     aw_polys = [lin_poly,
                 pk.permutation.left_sigma[0],
@@ -391,13 +367,6 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
     )
 
     saw_challenge = transcript.challenge_scalar(b"aggregate_witness", Fr)
-    # saw_polys = [kzg10.LabeledPoly.new(label="z_poly",hiding_bound=None,poly=z_poly),
-    #              kzg10.LabeledPoly.new(label="w_l_poly",hiding_bound=None,poly=w_l_poly),
-    #              kzg10.LabeledPoly.new(label="w_r_poly",hiding_bound=None,poly=w_r_poly),
-    #              kzg10.LabeledPoly.new(label="w_4_poly",hiding_bound=None,poly=w_4_poly),
-    #              kzg10.LabeledPoly.new(label="h_1_poly",hiding_bound=None,poly=h_1_poly),
-    #              kzg10.LabeledPoly.new(label="z_2_poly",hiding_bound=None,poly=z_2_poly),
-    #              kzg10.LabeledPoly.new(label="table_poly",hiding_bound=None,poly=table_poly)]
     
     saw_polys = [z_poly,
                 w_l_poly,
@@ -431,13 +400,12 @@ def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.T
                  z_2_poly_rands,
                  table_poly_rands]
     
-    # saw_commits, saw_rands = kzg10.commit_poly(pp,saw_polys,Fr)
 
     saw_opening = kzg10.open(
         powers,
         saw_polys,
         saw_commits,
-        z_challenge.mul(domain.element(1)),
+        z_challenge.mul(element(domain, 1)),
         saw_challenge,
         saw_rands,
         None

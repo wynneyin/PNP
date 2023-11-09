@@ -152,8 +152,9 @@ class field:
             return cls(c)
     
     # Returns the 2^s root of unity.
-    def two_adic_root_of_unity(self):
-        return self.TWO_ADIC_ROOT_OF_UNITY 
+    @classmethod
+    def two_adic_root_of_unity(cls):
+        return cls.TWO_ADIC_ROOT_OF_UNITY 
 
     # Returns the 2^s * small_subgroup_base^small_subgroup_base_adicity root of unity
     # if a small subgroup is defined.
@@ -161,28 +162,30 @@ class field:
         pass
 
     # Returns the multiplicative generator of `char()` - 1 order.
-    def multiplicative_generator(self):
-        return self.GENERATOR
+    @classmethod
+    def multiplicative_generator(cls):
+        return cls.GENERATOR
 
     # Returns the root of unity of order n, if one exists.
     # If no small multiplicative subgroup is defined, this is the 2-adic root of unity of order n
     # (for n a power of 2).
-    def get_root_of_unity(self,n):
+    @classmethod
+    def get_root_of_unity(cls,n):
         size = 2 ** (n.bit_length()-1)
         log_size_of_group = int(math.log2(size))
 
-        if n != size or log_size_of_group > self.TWO_ADICITY:
+        if n != size or log_size_of_group > cls.TWO_ADICITY:
             return None
 
         # Compute the generator for the multiplicative subgroup.
         # It should be 2^(log_size_of_group) root of unity.
-        omega = self.two_adic_root_of_unity()
-        R_inv=gmpy2.invert(self.R,self.MODULUS)
-        for _ in range(log_size_of_group, self.TWO_ADICITY):
+        omega = cls.two_adic_root_of_unity()
+        R_inv=gmpy2.invert(cls.R, cls.MODULUS)
+        for _ in range(log_size_of_group, cls.TWO_ADICITY):
             #modsquare
             omega *=omega
             omega *=R_inv
-            omega %=self.MODULUS
+            omega %=cls.MODULUS
         return omega
             
 

@@ -87,6 +87,10 @@
 #include <math.h>
 namespace at {
 namespace native {
+Tensor ntt_zkp_cpu(const Tensor& input);
+Tensor intt_zkp_cpu(const Tensor& input);
+Tensor coset_ntt_zkp_cpu(const Tensor& input);
+Tensor coset_intt_zkp_cpu(const Tensor& input);
 
 Tensor ntt_zkp_cpu(const Tensor& input) {
     auto out_sizes = input.numel();

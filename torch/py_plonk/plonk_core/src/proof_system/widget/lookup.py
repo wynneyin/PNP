@@ -1,5 +1,5 @@
 from .....bls12_381 import fr
-from .....domain import Radix2EvaluationDomain
+from .....domain import newdomain
 from dataclasses import dataclass
 from typing import List, Tuple
 from .....plonk_core.src.utils import lc
@@ -19,7 +19,7 @@ class Lookup:
 
     # Compute lookup portion of quotient polynomial
     def compute_lookup_quotient_term(self,
-        domain: Radix2EvaluationDomain,
+        domain,
         wl_eval_8n: List[fr.Fr],
         wr_eval_8n: List[fr.Fr],
         wo_eval_8n: List[fr.Fr],
@@ -35,13 +35,13 @@ class Lookup:
         zeta: fr.Fr,
         lookup_sep:fr.Fr):
 
-        domain_8n:Radix2EvaluationDomain = Radix2EvaluationDomain.new(8 * domain.size,zeta)
+        domain_8n = newdomain(8 * domain["size"])
 
         # Initialize result list
         result = []
 
         # Calculate lookup quotient term for each index
-        for i in range(domain_8n.size):
+        for i in range(domain_8n["size"]):
             quotient_i = self.compute_quotient_i(
                 i,
                 wl_eval_8n[i],

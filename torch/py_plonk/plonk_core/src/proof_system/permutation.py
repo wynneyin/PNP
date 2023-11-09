@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from ....bls12_381 import fr
 from typing import List, Tuple
-from ....domain import Radix2EvaluationDomain
+from ....domain import evaluate_all_lagrange_coefficients,newdomain
 from ....arithmetic import poly_mul_const,poly_add_poly
 from ....plonk_core.src.permutation.constants import K1,K2,K3
 @dataclass
@@ -156,7 +156,7 @@ class Permutation:
             self.fourth_sigma[0]
         )
 
-        domain = Radix2EvaluationDomain.new(n,z_challenge)
+        domain = newdomain(n)
         alpha2 = challengTuple[0].square()
         c = self.compute_lineariser_check_is_one(
             domain,
@@ -246,12 +246,12 @@ class Permutation:
     
     def compute_lineariser_check_is_one(
         self, 
-        domain: Radix2EvaluationDomain, 
+        domain, 
         z_challenge: fr.Fr, 
         alpha_sq: fr.Fr, 
         z_coeffs: List[fr.Fr]):
 
-        lagrange_coefficients = domain.evaluate_all_lagrange_coefficients(z_challenge)
+        lagrange_coefficients = evaluate_all_lagrange_coefficients(domain, z_challenge)
         l_1_z = lagrange_coefficients[0]
         const = l_1_z.mul(alpha_sq)
         res = poly_mul_const(z_coeffs,const)

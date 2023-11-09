@@ -19,9 +19,9 @@ from torch.py_plonk.transcript import transcript
 
 if __name__ == "__main__":
 
-    pp_file = "/home/zhiyuan/tensorZK/torch/py_plonk/params.txt"
-    pk_file = "/home/zhiyuan/tensorZK/torch/py_plonk/pk.txt"
-    cs_file = "/home/zhiyuan/tensorZK/torch/py_plonk/cs.txt"
+    pp_file = "/Users/zhiyuan/tensorZK/torch/py_plonk/params.txt"
+    pk_file = "/Users/zhiyuan/tensorZK/torch/py_plonk/pk.txt"
+    cs_file = "/Users/zhiyuan/tensorZK/torch/py_plonk/cs.txt"
 
     pp = read_pp_data(pp_file)
     pk = read_pk_data(pk_file)

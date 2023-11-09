@@ -45,16 +45,16 @@ def lookup_ratio(delta, epsilon, f, t, t_next,
 
 
 def compute_permutation_poly(domain, wires, beta, gamma, sigma_polys):
-    n = domain.size
+    n = domain["size"]
 
     # Constants defining cosets H, k1H, k2H, etc
     ks = [beta.one(),constants.K1(),constants.K2(),constants.K3()]
     sigma_mappings = [[],[],[],[]]
 
-    sigma_mappings[0] = NTT(domain,sigma_polys[0])
-    sigma_mappings[1] = NTT(domain,sigma_polys[1])
-    sigma_mappings[2] = NTT(domain,sigma_polys[2])
-    sigma_mappings[3] = NTT(domain,sigma_polys[3])
+    sigma_mappings[0] = NTT(sigma_polys[0])
+    sigma_mappings[1] = NTT(sigma_polys[1])
+    sigma_mappings[2] = NTT(sigma_polys[2])
+    sigma_mappings[3] = NTT(sigma_polys[3])
 
     # Transpose wires and sigma values to get "rows" in the form [wl_i,
     # wr_i, wo_i, ... ] where each row contains the wire and sigma
@@ -72,7 +72,7 @@ def compute_permutation_poly(domain, wires, beta, gamma, sigma_polys):
     roots = [fr.Fr.zero() for _ in range(1 << log_size )]
     roots[0] = beta.one()
     for idx in range(1, len(roots)):
-        roots[idx] = roots[idx - 1].mul(domain.group_gen)
+        roots[idx] = roots[idx - 1].mul(domain["group_gen"])
     
     # Initialize an empty list for product_argument
     product_argument = []
@@ -118,16 +118,14 @@ def compute_permutation_poly(domain, wires, beta, gamma, sigma_polys):
     z.pop()
     
     #Compute z poly
-    z_poly = INTT(domain,z)
+    z_poly = INTT(z)
     z_poly = from_coeff_vec(z_poly)
     
     return z_poly
 
 # Define a Python function that mirrors the Rust function
 def compute_lookup_permutation_poly(domain, f, t, h_1, h_2, delta, epsilon):
-    n = domain.size
-
-
+    n = domain["size"]
 
     assert len(f) == n
     assert len(t) == n
@@ -153,7 +151,7 @@ def compute_lookup_permutation_poly(domain, f, t, h_1, h_2, delta, epsilon):
     if flag_z_2:
         p_poly = copy.deepcopy(p)
     else:
-        p_poly = INTT(domain,p)
+        p_poly = INTT(p)
     p_poly = from_coeff_vec(p_poly)
     
     return p_poly

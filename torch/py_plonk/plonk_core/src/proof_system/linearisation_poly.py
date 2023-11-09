@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Tuple
-from ....domain import Radix2EvaluationDomain
+from ....domain import evaluate_vanishing_polynomial
 from ....bls12_381 import fr
 from ....plonk_core.src.proof_system.prover_key import Prover_Key
 from ....plonk_core.src.proof_system.widget.mod import WitnessValues
@@ -84,7 +84,7 @@ class ProofEvaluations:
     custom_evals: CustomEvaluations
 
 def compute(
-    domain: Radix2EvaluationDomain,
+    domain,
     prover_key: Prover_Key,
     alpha: fr.Fr,
     beta: fr.Fr,
@@ -117,8 +117,8 @@ def compute(
     h2_poly: List[fr.Fr],
     table_poly: List[fr.Fr]
     ):
-    n = domain.size
-    omega = domain.group_gen
+    n = domain["size"]
+    omega = domain["group_gen"]
     shifted_z_challenge = z_challenge.mul(omega)
 
     # Wire evaluations
@@ -186,7 +186,7 @@ def compute(
     # - Z_h(z_challenge) * [t_1(X) + z_challenge^n * t_2(X) + z_challenge^2n *
     # t_3(X) + z_challenge^3n * t_4(X)]
     one = alpha.one()
-    vanishing_poly_eval = domain.evaluate_vanishing_polynomial(z_challenge)
+    vanishing_poly_eval = evaluate_vanishing_polynomial(domain, z_challenge)
     z_challenge_to_n = vanishing_poly_eval.add(one)
     l1_eval = compute_first_lagrange_evaluation(
         domain,

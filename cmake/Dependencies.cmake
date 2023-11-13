@@ -856,6 +856,11 @@ if(USE_LMDB)
   endif()
 endif()
 
+# ---[ BLST
+add_subdirectory("${PROJECT_SOURCE_DIR}/third_party/blst")
+include_directories(SYSTEM ${BLST_INCLUDE_DIR})
+list(APPEND Caffe2_DEPENDENCY_LIBS blst)
+
 if(USE_OPENCL)
   message(INFO "USING OPENCL")
   find_package(OpenCL REQUIRED)

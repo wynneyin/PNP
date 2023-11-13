@@ -13,6 +13,7 @@
 #include <c10/util/quint2x4.h>
 #include <c10/util/quint4x2.h>
 #include <c10/util/quint8.h>
+#include <c10/util/BigInteger.h>
 
 #include <complex>
 #include <cstdint>
@@ -29,33 +30,70 @@ namespace c10 {
 
 // NB: Order matters for this macro; it is relied upon in
 // _promoteTypesLookup and the serialization format.
-#define AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(_) \
-  _(uint8_t, Byte) /* 0 */                               \
-  _(int8_t, Char) /* 1 */                                \
-  _(int16_t, Short) /* 2 */                              \
-  _(int, Int) /* 3 */                                    \
-  _(int64_t, Long) /* 4 */                               \
-  _(uint64_t, ULong) /* 4 */                               \
-  _(at::Half, Half) /* 5 */                              \
-  _(float, Float) /* 6 */                                \
-  _(double, Double) /* 7 */                              \
-  _(c10::complex<c10::Half>, ComplexHalf) /* 8 */        \
-  _(c10::complex<float>, ComplexFloat) /* 9 */           \
-  _(c10::complex<double>, ComplexDouble) /* 10 */        \
-  _(bool, Bool) /* 11 */                                 \
-  _(c10::qint8, QInt8) /* 12 */                          \
-  _(c10::quint8, QUInt8) /* 13 */                        \
-  _(c10::qint32, QInt32) /* 14 */                        \
-  _(at::BFloat16, BFloat16) /* 15 */                     \
-  _(c10::quint4x2, QUInt4x2) /* 16 */                    \
-  _(c10::quint2x4, QUInt2x4) /* 17 */                    \
-  _(c10::bits1x8, Bits1x8) /* 18 */                      \
-  _(c10::bits2x4, Bits2x4) /* 19 */                      \
-  _(c10::bits4x2, Bits4x2) /* 20 */                      \
-  _(c10::bits8, Bits8) /* 21 */                          \
-  _(c10::bits16, Bits16) /* 22 */                        \
-  _(c10::Float8_e5m2, Float8_e5m2) /* 23 */              \
-  _(c10::Float8_e4m3fn, Float8_e4m3fn) /* 24 */
+#define AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(_)         \
+  _(uint8_t, Byte) /* 0 */                                       \
+  _(int8_t, Char) /* 1 */                                        \
+  _(int16_t, Short) /* 2 */                                      \
+  _(int, Int) /* 3 */                                            \
+  _(int64_t, Long) /* 4 */                                       \
+  _(at::Half, Half) /* 5 */                                      \
+  _(float, Float) /* 6 */                                        \
+  _(double, Double) /* 7 */                                      \
+  _(c10::complex<c10::Half>, ComplexHalf) /* 8 */                \
+  _(c10::complex<float>, ComplexFloat) /* 9 */                   \
+  _(c10::complex<double>, ComplexDouble) /* 10 */                \
+  _(bool, Bool) /* 11 */                                         \
+  _(c10::qint8, QInt8) /* 12 */                                  \
+  _(c10::quint8, QUInt8) /* 13 */                                \
+  _(c10::qint32, QInt32) /* 14 */                                \
+  _(at::BFloat16, BFloat16) /* 15 */                             \
+  _(c10::quint4x2, QUInt4x2) /* 16 */                            \
+  _(c10::quint2x4, QUInt2x4) /* 17 */                            \
+  _(c10::bits1x8, Bits1x8) /* 18 */                              \
+  _(c10::bits2x4, Bits2x4) /* 19 */                              \
+  _(c10::bits4x2, Bits4x2) /* 20 */                              \
+  _(c10::bits8, Bits8) /* 21 */                                  \
+  _(c10::bits16, Bits16) /* 22 */                                \
+  _(c10::Float8_e5m2, Float8_e5m2) /* 23 */                      \
+  _(c10::Float8_e4m3fn, Float8_e4m3fn) /* 24 */                  \
+  _(uint64_t, ULong) /* 25 */                                    \
+  _(c10::Field64, Field64) /* 26 */                              \
+  _(c10::BigInteger, BigInteger) /* 27 */                        \
+  _(c10::BigInteger_Mont, BigInteger_Mont) /* 28 */              \
+  _(c10::FiniteField, FiniteField) /* 29 */                      \
+  _(c10::NOT_CURVE, NOT_CURVE) /* 30 */                          \
+  _(c10::ALT_BN128_Fr_G1_Base, ALT_BN128_Fr_G1_Base) /* 31.1 */  \
+  _(c10::ALT_BN128_Fr_G2_Base, ALT_BN128_Fr_G2_Base) /* 31.2 */  \
+  _(c10::ALT_BN128_Fq_G1_Base, ALT_BN128_Fq_G1_Base) /* 31.3 */  \
+  _(c10::ALT_BN128_Fq_G2_Base, ALT_BN128_Fq_G2_Base) /* 31.4 */  \
+  _(c10::ALT_BN128_Fr_G1_Mont, ALT_BN128_Fr_G1_Mont) /* 31.5 */  \
+  _(c10::ALT_BN128_Fr_G2_Mont, ALT_BN128_Fr_G2_Mont) /* 31.6 */  \
+  _(c10::ALT_BN128_Fq_G1_Mont, ALT_BN128_Fq_G1_Mont) /* 31.7 */  \
+  _(c10::ALT_BN128_Fq_G2_Mont, ALT_BN128_Fq_G2_Mont) /* 31.8 */  \
+  _(c10::BLS12_377_Fr_G1_Base, BLS12_377_Fr_G1_Base) /* 32.1 */  \
+  _(c10::BLS12_377_Fr_G2_Base, BLS12_377_Fr_G2_Base) /* 32.2 */  \
+  _(c10::BLS12_377_Fq_G1_Base, BLS12_377_Fq_G1_Base) /* 32.3 */  \
+  _(c10::BLS12_377_Fq_G2_Base, BLS12_377_Fq_G2_Base) /* 32.4 */  \
+  _(c10::BLS12_377_Fr_G1_Mont, BLS12_377_Fr_G1_Mont) /* 32.5 */  \
+  _(c10::BLS12_377_Fr_G2_Mont, BLS12_377_Fr_G2_Mont) /* 32.6 */  \
+  _(c10::BLS12_377_Fq_G1_Mont, BLS12_377_Fq_G1_Mont) /* 32.7 */  \
+  _(c10::BLS12_377_Fq_G2_Mont, BLS12_377_Fq_G2_Mont) /* 32.8 */  \
+  _(c10::BLS12_381_Fr_G1_Base, BLS12_381_Fr_G1_Base) /* 33.1 */  \
+  _(c10::BLS12_381_Fr_G2_Base, BLS12_381_Fr_G2_Base) /* 33.2 */  \
+  _(c10::BLS12_381_Fq_G1_Base, BLS12_381_Fq_G1_Base) /* 33.3 */  \
+  _(c10::BLS12_381_Fq_G2_Base, BLS12_381_Fq_G2_Base) /* 33.4 */  \
+  _(c10::BLS12_381_Fr_G1_Mont, BLS12_381_Fr_G1_Mont) /* 33.5 */  \
+  _(c10::BLS12_381_Fr_G2_Mont, BLS12_381_Fr_G2_Mont) /* 33.6 */  \
+  _(c10::BLS12_381_Fq_G1_Mont, BLS12_381_Fq_G1_Mont) /* 33.7 */  \
+  _(c10::BLS12_381_Fq_G2_Mont, BLS12_381_Fq_G2_Mont) /* 33.8 */  \
+  _(c10::MNT4753_Fr_G1_Base, MNT4753_Fr_G1_Base) /* 34.1 */      \
+  _(c10::MNT4753_Fr_G2_Base, MNT4753_Fr_G2_Base) /* 34.2 */      \
+  _(c10::MNT4753_Fq_G1_Base, MNT4753_Fq_G1_Base) /* 34.3 */      \
+  _(c10::MNT4753_Fq_G2_Base, MNT4753_Fq_G2_Base) /* 34.4 */      \
+  _(c10::MNT4753_Fr_G1_Mont, MNT4753_Fr_G1_Mont) /* 34.5 */      \
+  _(c10::MNT4753_Fr_G2_Mont, MNT4753_Fr_G2_Mont) /* 34.6 */      \
+  _(c10::MNT4753_Fq_G1_Mont, MNT4753_Fq_G1_Mont) /* 34.7 */      \
+  _(c10::MNT4753_Fq_G2_Mont, MNT4753_Fq_G2_Mont) /* 34.8 */
 
 // If you want to support ComplexHalf for real, add ComplexHalf
 // into this macro (and change the name).  But beware: convert()
@@ -66,7 +104,6 @@ namespace c10 {
   _(int16_t, Short)                                                \
   _(int, Int)                                                      \
   _(int64_t, Long)                                                 \
-  _(uint64_t, ULong)                                               \
   _(at::Half, Half)                                                \
   _(float, Float)                                                  \
   _(double, Double)                                                \
@@ -83,7 +120,6 @@ namespace c10 {
   _(int16_t, Short)                            \
   _(int, Int)                                  \
   _(int64_t, Long)                             \
-  _(uint64_t, ULong)                           \
   _(at::Half, Half)                            \
   _(float, Float)                              \
   _(double, Double)                            \
@@ -157,7 +193,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)            \
   _(int, Int)                  \
   _(int64_t, Long)
-// uint64_t is not a INT type in our design
 
 #define AT_FORALL_SCALAR_TYPES(_) \
   _(uint8_t, Byte)                \
@@ -165,7 +200,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)               \
   _(int, Int)                     \
   _(int64_t, Long)                \
-  _(uint64_t, ULong)              \
   _(float, Float)                 \
   _(double, Double)
 
@@ -175,7 +209,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)                               \
   _(int, Int)                                     \
   _(int64_t, Long)                                \
-  _(uint64_t, ULong)                              \
   _(float, Float)                                 \
   _(double, Double)                               \
   _(decltype(::c10::impl::ScalarTypeToCPPType<    \
@@ -188,7 +221,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)                                              \
   _(int, Int)                                                    \
   _(int64_t, Long)                                               \
-  _(uint64_t, ULong)                                             \
   _(float, Float)                                                \
   _(double, Double)                                              \
   _(decltype(::c10::impl::ScalarTypeToCPPType<                   \
@@ -204,7 +236,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)                                                           \
   _(int, Int)                                                                 \
   _(int64_t, Long)                                                            \
-  _(uint64_t, ULong)                                                          \
   _(float, Float)                                                             \
   _(double, Double)                                                           \
   _(decltype(::c10::impl::ScalarTypeToCPPType<                                \
@@ -224,7 +255,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)                                        \
   _(int, Int)                                              \
   _(int64_t, Long)                                         \
-  _(uint64_t, ULong)                                       \
   _(float, Float)                                          \
   _(double, Double)                                        \
   _(decltype(::c10::impl::ScalarTypeToCPPType<             \
@@ -247,7 +277,6 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(int16_t, Short)                                                     \
   _(int, Int)                                                           \
   _(int64_t, Long)                                                      \
-  _(uint64_t, ULong)                                                    \
   _(float, Float)                                                       \
   _(double, Double)                                                     \
   _(decltype(::c10::impl::ScalarTypeToCPPType<                          \
@@ -272,6 +301,46 @@ AT_FORALL_SCALAR_TYPES_WITH_COMPLEX_AND_QINTS(SPECIALIZE_CppTypeToScalarType)
   _(c10::qint32, QInt32)        \
   _(c10::quint4x2, QUInt4x2)    \
   _(c10::quint2x4, QUInt2x4)
+
+#define AT_FORALL_FIELD_TYPES(_)                     \
+  _(uint64_t, ULong)                                 \
+  _(c10::Field64, Field64)                           \
+  _(c10::BigInteger, BigInteger)                     \
+  _(c10::FiniteField, FiniteField)                   \
+  _(c10::ALT_BN128_Fr_G1_Base, ALT_BN128_Fr_G1_Base) \
+  _(c10::ALT_BN128_Fr_G2_Base, ALT_BN128_Fr_G2_Base) \
+  _(c10::ALT_BN128_Fq_G1_Base, ALT_BN128_Fq_G1_Base) \
+  _(c10::ALT_BN128_Fq_G2_Base, ALT_BN128_Fq_G2_Base) \
+  _(c10::ALT_BN128_Fr_G1_Mont, ALT_BN128_Fr_G1_Mont) \
+  _(c10::ALT_BN128_Fr_G2_Mont, ALT_BN128_Fr_G2_Mont) \
+  _(c10::ALT_BN128_Fq_G1_Mont, ALT_BN128_Fq_G1_Mont) \
+  _(c10::ALT_BN128_Fq_G2_Mont, ALT_BN128_Fq_G2_Mont) \
+  _(c10::BLS12_377_Fr_G1_Base, BLS12_377_Fr_G1_Base) \
+  _(c10::BLS12_377_Fr_G2_Base, BLS12_377_Fr_G2_Base) \
+  _(c10::BLS12_377_Fq_G1_Base, BLS12_377_Fq_G1_Base) \
+  _(c10::BLS12_377_Fq_G2_Base, BLS12_377_Fq_G2_Base) \
+  _(c10::BLS12_377_Fr_G1_Mont, BLS12_377_Fr_G1_Mont) \
+  _(c10::BLS12_377_Fr_G2_Mont, BLS12_377_Fr_G2_Mont) \
+  _(c10::BLS12_377_Fq_G1_Mont, BLS12_377_Fq_G1_Mont) \
+  _(c10::BLS12_377_Fq_G2_Mont, BLS12_377_Fq_G2_Mont) \
+  _(c10::BLS12_381_Fr_G1_Base, BLS12_381_Fr_G1_Base) \
+  _(c10::BLS12_381_Fr_G2_Base, BLS12_381_Fr_G2_Base) \
+  _(c10::BLS12_381_Fq_G1_Base, BLS12_381_Fq_G1_Base) \
+  _(c10::BLS12_381_Fq_G2_Base, BLS12_381_Fq_G2_Base) \
+  _(c10::BLS12_381_Fr_G1_Mont, BLS12_381_Fr_G1_Mont) \
+  _(c10::BLS12_381_Fr_G2_Mont, BLS12_381_Fr_G2_Mont) \
+  _(c10::BLS12_381_Fq_G1_Mont, BLS12_381_Fq_G1_Mont) \
+  _(c10::BLS12_381_Fq_G2_Mont, BLS12_381_Fq_G2_Mont) \
+  _(c10::MNT4753_Fr_G1_Base, MNT4753_Fr_G1_Base)     \
+  _(c10::MNT4753_Fr_G2_Base, MNT4753_Fr_G2_Base)     \
+  _(c10::MNT4753_Fq_G1_Base, MNT4753_Fq_G1_Base)     \
+  _(c10::MNT4753_Fq_G2_Base, MNT4753_Fq_G2_Base)     \
+  _(c10::MNT4753_Fr_G1_Mont, MNT4753_Fr_G1_Mont)     \
+  _(c10::MNT4753_Fr_G2_Mont, MNT4753_Fr_G2_Mont)     \
+  _(c10::MNT4753_Fq_G1_Mont, MNT4753_Fq_G1_Mont)     \
+  _(c10::MNT4753_Fq_G2_Mont, MNT4753_Fq_G2_Mont)
+
+
 
 #define AT_FORALL_COMPLEX_TYPES(_)     \
   _(c10::complex<float>, ComplexFloat) \
@@ -349,6 +418,68 @@ static inline bool isQIntType(ScalarType t) {
   return t == ScalarType::QInt8 || t == ScalarType::QUInt8 ||
       t == ScalarType::QInt32 || t == ScalarType::QUInt4x2 ||
       t == ScalarType::QUInt2x4;
+}
+
+static inline bool isEllipticCurveType(ScalarType t) {
+  return t == ScalarType::ALT_BN128_Fr_G1_Base || t == ScalarType::ALT_BN128_Fr_G2_Base || t == ScalarType::ALT_BN128_Fq_G1_Base || t == ScalarType::ALT_BN128_Fq_G2_Base || t == ScalarType::ALT_BN128_Fr_G1_Mont || t == ScalarType::ALT_BN128_Fr_G2_Mont || t == ScalarType::ALT_BN128_Fq_G1_Mont || t == ScalarType::ALT_BN128_Fq_G2_Mont || t == ScalarType::BLS12_377_Fr_G1_Base || t == ScalarType::BLS12_377_Fr_G2_Base || t == ScalarType::BLS12_377_Fq_G1_Base || t == ScalarType::BLS12_377_Fq_G2_Base || t == ScalarType::BLS12_377_Fr_G1_Mont || t == ScalarType::BLS12_377_Fr_G2_Mont || t == ScalarType::BLS12_377_Fq_G1_Mont || t == ScalarType::BLS12_377_Fq_G2_Mont || t == ScalarType::BLS12_381_Fr_G1_Base || t == ScalarType::BLS12_381_Fr_G2_Base || t == ScalarType::BLS12_381_Fq_G1_Base || t == ScalarType::BLS12_381_Fq_G2_Base || t == ScalarType::BLS12_381_Fr_G1_Mont || t == ScalarType::BLS12_381_Fr_G2_Mont || t == ScalarType::BLS12_381_Fq_G1_Mont || t == ScalarType::BLS12_381_Fq_G2_Mont || t == ScalarType::MNT4753_Fr_G1_Base || t == ScalarType::MNT4753_Fr_G2_Base || t == ScalarType::MNT4753_Fq_G1_Base || t == ScalarType::MNT4753_Fq_G2_Base || t == ScalarType::MNT4753_Fr_G1_Mont || t == ScalarType::MNT4753_Fr_G2_Mont || t == ScalarType::MNT4753_Fq_G1_Mont || t == ScalarType::MNT4753_Fq_G2_Mont;
+}
+
+static inline bool isBigIntegerType(ScalarType t) {
+  // Don't forget to extend this when adding new BigInteger types
+  return t == ScalarType::Field64 || t == ScalarType::BigInteger || t == ScalarType::BigInteger_Mont || t == ScalarType::FiniteField || isEllipticCurveType(t);
+}
+
+static inline bool isMontgomeryField(ScalarType t) {
+  // Don't forget to extend this when adding new BigInteger types
+  return t == ScalarType::BigInteger_Mont || t == ScalarType::ALT_BN128_Fr_G1_Mont || t == ScalarType::ALT_BN128_Fr_G2_Mont || t == ScalarType::ALT_BN128_Fq_G1_Mont || t == ScalarType::ALT_BN128_Fq_G2_Mont || t == ScalarType::BLS12_377_Fr_G1_Mont || t == ScalarType::BLS12_377_Fr_G2_Mont || t == ScalarType::BLS12_377_Fq_G1_Mont || t == ScalarType::BLS12_377_Fq_G2_Mont || t == ScalarType::BLS12_381_Fr_G1_Mont || t == ScalarType::BLS12_381_Fr_G2_Mont || t == ScalarType::BLS12_381_Fq_G1_Mont || t == ScalarType::BLS12_381_Fq_G2_Mont || t == ScalarType::MNT4753_Fr_G1_Mont || t == ScalarType::MNT4753_Fr_G2_Mont || t == ScalarType::MNT4753_Fq_G1_Mont || t == ScalarType::MNT4753_Fq_G2_Mont;
+}
+
+
+
+static inline uint8_t num_uint64(ScalarType t) {
+  switch (t) {
+    case ScalarType::ALT_BN128_Fr_G1_Base:
+    case ScalarType::ALT_BN128_Fr_G1_Mont:
+    case ScalarType::ALT_BN128_Fr_G2_Base:
+    case ScalarType::ALT_BN128_Fr_G2_Mont:
+    case ScalarType::ALT_BN128_Fq_G1_Base:
+    case ScalarType::ALT_BN128_Fq_G1_Mont:
+    case ScalarType::ALT_BN128_Fq_G2_Base:
+    case ScalarType::ALT_BN128_Fq_G2_Mont:
+      return 4;
+    case ScalarType::BLS12_377_Fr_G1_Base:
+    case ScalarType::BLS12_377_Fr_G1_Mont:
+    case ScalarType::BLS12_377_Fr_G2_Base:
+    case ScalarType::BLS12_377_Fr_G2_Mont:
+      return 4;
+    case ScalarType::BLS12_377_Fq_G1_Base:
+    case ScalarType::BLS12_377_Fq_G1_Mont:
+    case ScalarType::BLS12_377_Fq_G2_Base:
+    case ScalarType::BLS12_377_Fq_G2_Mont:
+      return 6;
+    case ScalarType::BLS12_381_Fr_G1_Base:
+    case ScalarType::BLS12_381_Fr_G1_Mont:
+    case ScalarType::BLS12_381_Fr_G2_Base:
+    case ScalarType::BLS12_381_Fr_G2_Mont:
+      return 4;
+    case ScalarType::BLS12_381_Fq_G1_Base:
+    case ScalarType::BLS12_381_Fq_G1_Mont:
+    case ScalarType::BLS12_381_Fq_G2_Base:
+    case ScalarType::BLS12_381_Fq_G2_Mont:
+      return 6;
+    case ScalarType::MNT4753_Fr_G1_Base:
+    case ScalarType::MNT4753_Fr_G1_Mont:
+    case ScalarType::MNT4753_Fr_G2_Base:
+    case ScalarType::MNT4753_Fr_G2_Mont:
+      return 12;
+    case ScalarType::MNT4753_Fq_G1_Base:
+    case ScalarType::MNT4753_Fq_G1_Mont:
+    case ScalarType::MNT4753_Fq_G2_Base:
+    case ScalarType::MNT4753_Fq_G2_Mont:
+      return 12;
+    default:
+      TORCH_CHECK(false, "not a elliptic curve type");
+  }
 }
 
 static inline bool isBitsType(ScalarType t) {
@@ -488,7 +619,6 @@ static inline ScalarType promoteTypes(ScalarType a, ScalarType b) {
   constexpr auto i2 = ScalarType::Short;
   constexpr auto i4 = ScalarType::Int;
   constexpr auto i8 = ScalarType::Long;
-  constexpr auto u8 = ScalarType::ULong;
   constexpr auto f2 = ScalarType::Half;
   constexpr auto f4 = ScalarType::Float;
   constexpr auto f8 = ScalarType::Double;
@@ -551,27 +681,30 @@ static inline ScalarType promoteTypes(ScalarType a, ScalarType b) {
   // clang-format off
   static constexpr ScalarType _promoteTypesLookup[
       NUM_PROMOTE_TYPES][NUM_PROMOTE_TYPES] = {
-      /*        u1  i1  i2  i4  i8  u8, f2  f4  f8  c2  c4  c8  b1  q1  q2  q3  bf  b8  h8*/
-      /* u1 */ {u1, i2, i2, i4, i8, u8, f2, f4, f8, c2, c4, c8, u1, ud, ud, ud, bf, b8, h8},
-      /* i1 */ {i2, i1, i2, i4, i8, u8, f2, f4, f8, c2, c4, c8, i1, ud, ud, ud, bf, b8, h8},
-      /* i2 */ {i2, i2, i2, i4, i8, u8, f2, f4, f8, c2, c4, c8, i2, ud, ud, ud, bf, b8, h8},
-      /* i4 */ {i4, i4, i4, i4, i8, u8, f2, f4, f8, c2, c4, c8, i4, ud, ud, ud, bf, b8, h8},
-      /* i8 */ {i8, i8, i8, i8, i8, u8, f2, f4, f8, c2, c4, c8, i8, ud, ud, ud, bf, b8, h8},
-      /* u8 */ {i8, i8, i8, i8, i8, u8, f2, f4, f8, c2, c4, c8, i8, ud, ud, ud, bf, b8, h8},
-      /* f2 */ {f2, f2, f2, f2, f2, f2, f2, f4, f8, c2, c4, c8, f2, ud, ud, ud, f4, f4, f4},
-      /* f4 */ {f4, f4, f4, f4, f4, f4, f4, f4, f8, c4, c4, c8, f4, ud, ud, ud, f4, f4, f4},
-      /* f8 */ {f8, f8, f8, f8, f8, f8, f8, f8, f8, c8, c8, c8, f8, ud, ud, ud, f8, f8, f8},
-      /* c2 */ {c2, c2, c2, c2, c2, c2, c2, c4, c8, c2, c4, c8, c2, ud, ud, ud, c4, c4, c4},
-      /* c4 */ {c4, c4, c4, c4, c4, c4, c4, c4, c8, c4, c4, c8, c4, ud, ud, ud, c4, c4, c4},
-      /* c8 */ {c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, ud, ud, ud, c8, c8, c8},
-      /* b1 */ {u1, i1, i2, i4, i8, u8, f2, f4, f8, c2, c4, c8, b1, ud, ud, ud, bf, b8, h8},
-      /* q1 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
-      /* q2 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
-      /* q3 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
-      /* bf */ {bf, bf, bf, bf, bf, bf, f4, f4, f8, c4, c4, c8, bf, ud, ud, ud, bf, bf, bf},
-      /* b8 */ {b8, b8, b8, b8, b8, b8, f4, f4, f8, c4, c4, c8, b8, ud, ud, ud, bf, b8, ud},
-      /* h8 */ {h8, h8, h8, h8, h8, h8, f4, f4, f8, c4, c4, c8, h8, ud, ud, ud, bf, ud, h8},
+      /*        u1  i1  i2  i4  i8  f2  f4  f8  c2  c4  c8  b1  q1  q2  q3  bf  b8  h8*/
+      /* u1 */ {u1, i2, i2, i4, i8, f2, f4, f8, c2, c4, c8, u1, ud, ud, ud, bf, b8, h8},
+      /* i1 */ {i2, i1, i2, i4, i8, f2, f4, f8, c2, c4, c8, i1, ud, ud, ud, bf, b8, h8},
+      /* i2 */ {i2, i2, i2, i4, i8, f2, f4, f8, c2, c4, c8, i2, ud, ud, ud, bf, b8, h8},
+      /* i4 */ {i4, i4, i4, i4, i8, f2, f4, f8, c2, c4, c8, i4, ud, ud, ud, bf, b8, h8},
+      /* i8 */ {i8, i8, i8, i8, i8, f2, f4, f8, c2, c4, c8, i8, ud, ud, ud, bf, b8, h8},
+      /* f2 */ {f2, f2, f2, f2, f2, f2, f4, f8, c2, c4, c8, f2, ud, ud, ud, f4, f4, f4},
+      /* f4 */ {f4, f4, f4, f4, f4, f4, f4, f8, c4, c4, c8, f4, ud, ud, ud, f4, f4, f4},
+      /* f8 */ {f8, f8, f8, f8, f8, f8, f8, f8, c8, c8, c8, f8, ud, ud, ud, f8, f8, f8},
+      /* c2 */ {c2, c2, c2, c2, c2, c2, c4, c8, c2, c4, c8, c2, ud, ud, ud, c4, c4, c4},
+      /* c4 */ {c4, c4, c4, c4, c4, c4, c4, c8, c4, c4, c8, c4, ud, ud, ud, c4, c4, c4},
+      /* c8 */ {c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, c8, ud, ud, ud, c8, c8, c8},
+      /* b1 */ {u1, i1, i2, i4, i8, f2, f4, f8, c2, c4, c8, b1, ud, ud, ud, bf, b8, h8},
+      /* q1 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
+      /* q2 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
+      /* q3 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud},
+      /* bf */ {bf, bf, bf, bf, bf, f4, f4, f8, c4, c4, c8, bf, ud, ud, ud, bf, bf, bf},
+      /* b8 */ {b8, b8, b8, b8, b8, f4, f4, f8, c4, c4, c8, b8, ud, ud, ud, bf, b8, ud},
+      /* h8 */ {h8, h8, h8, h8, h8, f4, f4, f8, c4, c4, c8, h8, ud, ud, ud, bf, ud, h8},
   };
+
+
+
+
   // clang-format on
   return _promoteTypesLookup[static_cast<int>(a)][static_cast<int>(b)];
 }

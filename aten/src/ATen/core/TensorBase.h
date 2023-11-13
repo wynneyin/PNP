@@ -247,6 +247,7 @@ class TORCH_API TensorBase {
   IntArrayRef strides() const {
     return impl_->strides();
   }
+
   // See impl::get_opt_names in ATen/NamedTensor.h for docs.
   c10::optional<DimnameList> opt_names() const {
     return impl::get_opt_names(unsafeGetTensorImpl());
@@ -407,6 +408,11 @@ class TORCH_API TensorBase {
   /// Returns a `Tensor`'s dtype (`TypeMeta`).
   caffe2::TypeMeta dtype() const {
     return impl_->dtype();
+  }
+
+  /// Sets the `Tensor`'s dtype (`TypeMeta`).
+  void set_dtype(const caffe2::TypeMeta data_type) {
+    impl_->set_dtype(data_type);
   }
 
   /// Returns a `Tensor`'s device.

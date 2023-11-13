@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <c10/util/BigInteger.h>
 #include <c10/core/OptionalRef.h>
 #include <c10/core/ScalarType.h>
 #include <c10/core/SymFloat.h>
@@ -56,6 +57,7 @@ class C10_API Scalar {
       ComplexHalf,
       DEFINE_IMPLICIT_CTOR)
   AT_FORALL_COMPLEX_TYPES(DEFINE_IMPLICIT_CTOR)
+  AT_FORALL_FIELD_TYPES(DEFINE_IMPLICIT_CTOR)
 
 #undef DEFINE_IMPLICIT_CTOR
 
@@ -89,6 +91,8 @@ class C10_API Scalar {
       return checked_convert<type, bool>(v.i, #type);                 \
     } else if (Tag::HAS_i == tag) {                                   \
       return checked_convert<type, int64_t>(v.i, #type);              \
+    } else if (Tag::HAS_u == tag) {                                   \
+      return checked_convert<type, uint64_t>(v.u, #type);             \
     } else if (Tag::HAS_si == tag) {                                  \
       TORCH_CHECK(false, "tried to get " #name " out of SymInt")      \
     } else if (Tag::HAS_sd == tag) {                                  \
@@ -101,6 +105,7 @@ class C10_API Scalar {
 
   // TODO: Support ComplexHalf accessor
   AT_FORALL_SCALAR_TYPES_WITH_COMPLEX(DEFINE_ACCESSOR)
+  DEFINE_ACCESSOR(uint64_t, ULong)
 
 #undef DEFINE_ACCESSOR
 
@@ -154,6 +159,9 @@ class C10_API Scalar {
   bool isIntegral(bool includeBool) const {
     return Tag::HAS_i == tag || Tag::HAS_si == tag ||
         (includeBool && isBoolean());
+  }
+  bool isUnsigned() const {
+    return Tag::HAS_u == tag;
   }
 
   bool isComplex() const {
@@ -262,6 +270,8 @@ class C10_API Scalar {
       return ScalarType::Double;
     } else if (isIntegral(/*includeBool=*/false)) {
       return ScalarType::Long;
+    } else if (isUnsigned()) {
+      return ScalarType::ULong;
     } else if (isBoolean()) {
       return ScalarType::Bool;
     } else {
@@ -312,7 +322,7 @@ class C10_API Scalar {
   // We can't set v in the initializer list using the
   // syntax v{ .member = ... } because it doesn't work on MSVC
  private:
-  enum class Tag { HAS_d, HAS_i, HAS_z, HAS_b, HAS_sd, HAS_si, HAS_sb };
+  enum class Tag { HAS_d, HAS_i, HAS_u, HAS_z, HAS_b, HAS_sd, HAS_si, HAS_sb };
 
   // NB: assumes that self has already been cleared
   C10_ALWAYS_INLINE void moveFrom(Scalar&& rhs) noexcept {
@@ -331,6 +341,7 @@ class C10_API Scalar {
   union v_t {
     double d{};
     int64_t i;
+    uint64_t u;
     c10::complex<double> z;
     c10::intrusive_ptr_target* p;
     v_t() {} // default constructor
@@ -347,8 +358,15 @@ class C10_API Scalar {
 
   template <
       typename T,
+      typename std::enable_if<c10::is_field<T>::value, bool>::type* = nullptr>
+  Scalar(T vv, bool) : tag(Tag::HAS_u) {
+    v.u = convert<decltype(v.u), T>(vv);;
+  }
+
+  template <
+      typename T,
       typename std::enable_if<
-          !std::is_integral<T>::value && !c10::is_complex<T>::value,
+          !std::is_integral<T>::value && !c10::is_complex<T>::value && !c10::is_field<T>::value,
           bool>::type* = nullptr>
   Scalar(T vv, bool) : tag(Tag::HAS_d) {
     v.d = convert<decltype(v.d), T>(vv);

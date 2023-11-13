@@ -2331,6 +2331,10 @@ struct C10_API TensorImpl : public c10::intrusive_ptr_target {
     data_type_ = data_type;
   }
 
+  void set_dtype(const caffe2::TypeMeta data_type) {
+    data_type_ = data_type;
+  }
+
   void empty_tensor_restride_symint(MemoryFormat memory_format);
 
   /**

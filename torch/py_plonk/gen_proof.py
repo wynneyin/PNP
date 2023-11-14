@@ -19,18 +19,18 @@ from .bls12_381 import fq,fr
 
 
 def gen_proof(pp, pk: Prover_Key, cs: StandardComposer, transcript: transcript.Transcript):
-    #init Fr params (FFTfield)
-    Fr=fr.Fr(value = gmpy2.mpz(0))
+    #init Fr params (FFTfield), the value is arbitrary
+    Fr=fr.Fr(value = 0)
     #get FFT domaim
     domain = newdomain(cs.circuit_bound())
     n = domain["size"]
     transcript.append_pi(b"pi")
     powers = [pp.powers_of_g, pp.powers_of_gamma_g]
     #1. Compute witness Polynomials
-    w_l_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_l_scalar.txt")
-    w_r_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_r_scalar.txt")
-    w_o_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_o_scalar.txt")
-    w_4_scalar=read_scalar_data("/Users/zhiyuan/tensorZK/torch/py_plonk/w_4_scalar.txt")
+    w_l_scalar=read_scalar_data("torch/py_plonk/w_l_scalar.txt")
+    w_r_scalar=read_scalar_data("torch/py_plonk/w_r_scalar.txt")
+    w_o_scalar=read_scalar_data("torch/py_plonk/w_o_scalar.txt")
+    w_4_scalar=read_scalar_data("torch/py_plonk/w_4_scalar.txt")
 
     w_l_poly = from_coeff_vec(INTT(w_l_scalar))
     w_r_poly = from_coeff_vec(INTT(w_r_scalar))

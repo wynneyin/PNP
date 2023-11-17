@@ -67,11 +67,11 @@ struct PALLAS_Fq_G1 : public pallas_fq_mont {
 
 typedef mont_t<255, Vesta_P, Pasta_M0,
                     Vesta_RR, Vesta_one,
-                    Vesta_Px2> pallas_fq_mont;
-struct VESTA_Fr_G1 : public pallas_fq_mont {
-    using mem_t = Pallas_Fq_G1;
+                    Vesta_Px2> vesta_fr_mont;
+struct VESTA_Fr_G1 : public vesta_fr_mont {
+    using mem_t = VESTA_Fr_G1;
     __device__ __forceinline__ VESTA_Fr_G1() = default;
-    __device__ __forceinline__ VESTA_Fr_G1(const pallas_fq_mont& a) : pallas_fq_mont(a) {}
+    __device__ __forceinline__ VESTA_Fr_G1(const vesta_fr_mont& a) : vesta_fr_mont(a) {}
 };
 
 } // namespace native

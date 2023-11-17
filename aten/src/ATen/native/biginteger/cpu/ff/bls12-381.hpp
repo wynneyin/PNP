@@ -5,7 +5,6 @@
 namespace at { 
 namespace native {
 
-
 static const vec256 BLS12_381_r = { 
     TO_LIMB_T(0xffffffff00000001), TO_LIMB_T(0x53bda402fffe5bfe),
     TO_LIMB_T(0x3339d80809a1d805), TO_LIMB_T(0x73eda753299d7d48)
@@ -25,7 +24,6 @@ struct BLS12_381_Fr_G1 : public bls12_381_fr_mont {
     inline BLS12_381_Fr_G1() = default;
     inline BLS12_381_Fr_G1(const bls12_381_fr_mont& a) : bls12_381_fr_mont(a) {}
 };
-
 
 static const vec384 BLS12_381_P = {
     TO_LIMB_T(0xb9feffffffffaaab), TO_LIMB_T(0x1eabfffeb153ffff),
@@ -50,5 +48,5 @@ struct BLS12_381_Fq_G1 : public bls12_381_fq_mont {
     inline BLS12_381_Fq_G1(const bls12_381_fq_mont& a) : bls12_381_fq_mont(a) {}
 };
 
-}
-}
+} // namespace native
+} // namespace at

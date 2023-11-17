@@ -142,6 +142,22 @@ std::pair<std::string, std::string> getDtypeNames(at::ScalarType scalarType) {
       return std::make_pair("MNT4753_Fq_G1_Mont", "");
     case at::ScalarType::MNT4753_Fq_G2_Mont:
       return std::make_pair("MNT4753_Fq_G2_Mont", "");
+    case at::ScalarType::PALLAS_Fr_G1_Mont:
+      return std::make_pair("PALLAS_Fr_G1_Mont", "");
+    case at::ScalarType::PALLAS_Fr_G2_Mont:
+      return std::make_pair("PALLAS_Fr_G2_Mont", "");
+    case at::ScalarType::PALLAS_Fq_G1_Mont:
+      return std::make_pair("PALLAS_Fq_G1_Mont", "");
+    case at::ScalarType::PALLAS_Fq_G2_Mont:
+      return std::make_pair("PALLAS_Fq_G2_Mont", "");
+    case at::ScalarType::VESTA_Fr_G1_Mont:
+      return std::make_pair("VESTA_Fr_G1_Mont", "");
+    case at::ScalarType::VESTA_Fr_G2_Mont:
+      return std::make_pair("VESTA_Fr_G2_Mont", "");
+    case at::ScalarType::VESTA_Fq_G1_Mont:
+      return std::make_pair("VESTA_Fq_G1_Mont", "");
+    case at::ScalarType::VESTA_Fq_G2_Mont:
+      return std::make_pair("VESTA_Fq_G2_Mont", "");
     default:
       throw std::runtime_error("Unimplemented scalar type");
   }

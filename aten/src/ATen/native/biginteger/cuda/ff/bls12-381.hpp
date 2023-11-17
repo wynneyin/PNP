@@ -7,7 +7,6 @@ namespace native {
 
 #define TO_CUDA_T(limb64) (uint32_t)(limb64), (uint32_t)(limb64>>32)
 
-
 static __device__ __constant__ __align__(16) const uint32_t BLS12_381_r[8] = {
     TO_CUDA_T(0xffffffff00000001), TO_CUDA_T(0x53bda402fffe5bfe),
     TO_CUDA_T(0x3339d80809a1d805), TO_CUDA_T(0x73eda753299d7d48)
@@ -24,7 +23,6 @@ static __device__ __constant__ __align__(16) const uint32_t BLS12_381_rx2[8] = {
     TO_CUDA_T(0xfffffffe00000002), TO_CUDA_T(0xa77b4805fffcb7fd),
     TO_CUDA_T(0x6673b0101343b00a), TO_CUDA_T(0xe7db4ea6533afa90),
 };
-
 static __device__ __constant__ /*const*/ uint32_t BLS12_381_m0 = 0xffffffff;
 typedef mont_t<255, BLS12_381_r, BLS12_381_m0,
                     BLS12_381_rRR, BLS12_381_rone,
@@ -57,7 +55,6 @@ static __device__ __constant__ __align__(16) const uint32_t BLS12_381_Px8[12] = 
     TO_CUDA_T(0x58dd3db21a5d66bb), TO_CUDA_T(0xd0088f51cbff34d2)
 };
 static __device__ __constant__ const uint32_t BLS12_381_M0 = 0xfffcfffd;
-
 typedef mont_t<381, BLS12_381_P, BLS12_381_M0,
                     BLS12_381_RR, BLS12_381_one,
                     BLS12_381_Px8> bls12_381_fq_mont;
@@ -67,5 +64,5 @@ struct BLS12_381_Fq_G1 : public bls12_381_fq_mont {
     __device__ __forceinline__ BLS12_381_Fq_G1(const bls12_381_fq_mont& a) : bls12_381_fq_mont(a) {}
 };
 
-}
-}
+} // namespace native
+} // namespace at

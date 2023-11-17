@@ -5,59 +5,74 @@
 namespace at { 
 namespace native {
 
-static const uint32_t Vesta_P[8] = {
-    0x00000001, 0x8c46eb21, 0x0994a8dd, 0x224698fc,
-    0x00000000, 0x00000000, 0x00000000, 0x40000000
+static const vec256 Pallas_P = {
+    TO_LIMB_T(0x992d30ed00000001), TO_LIMB_T(0x224698fc094cf91b),
+    TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x4000000000000000)
 };
-static const uint32_t Vesta_RR[8] = { /* (1<<512)%P */
-    0x0000000f, 0xfc9678ff, 0x891a16e3, 0x67bb433d,
-    0x04ccf590, 0x7fae2310, 0x7ccfdaa9, 0x096d41af
+static const vec256 Pallas_RR = { /* (1<<512)%P */
+    TO_LIMB_T(0x8c78ecb30000000f), TO_LIMB_T(0xd7d30dbd8b0de0e7),
+    TO_LIMB_T(0x7797a99bc3c95d18), TO_LIMB_T(0x096d41af7b9cb714)
 };
-static const uint32_t Vesta_one[8] = { /* (1<<256)%P */
-    0xfffffffd, 0x5b2b3e9c, 0xe3420567, 0x992c350b,
-    0xffffffff, 0xffffffff, 0xffffffff, 0x3fffffff
+static const vec256 Pallas_one = { /* (1<<256)%P */
+    TO_LIMB_T(0x34786d38fffffffd), TO_LIMB_T(0x992c350be41914ad),
+    TO_LIMB_T(0xffffffffffffffff), TO_LIMB_T(0x3fffffffffffffff)
 };
-static const uint32_t Vesta_Px2[8] = { /* left-aligned modulus */
-    0x00000002, 0x188dd642, 0x132951bb, 0x448d31f8,
-    0x00000000, 0x00000000, 0x00000000, 0x80000000
+static const vec256 Pallas_Px2 = { /* left-aligned modulus */
+    TO_LIMB_T(0x325a61da00000002), TO_LIMB_T(0x448d31f81299f237),
+    TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x8000000000000000)
 };
-
-static const uint32_t Pallas_P[8] = {
-    0x00000001, 0x992d30ed, 0x094cf91b, 0x224698fc,
-    0x00000000, 0x00000000, 0x00000000, 0x40000000
-};
-static const uint32_t Pallas_RR[8] = { /* (1<<512)%P */
-    0x0000000f, 0x8c78ecb3, 0x8b0de0e7, 0xd7d30dbd,
-    0xc3c95d18, 0x7797a99b, 0x7b9cb714, 0x096d41af
-};
-static const uint32_t Pallas_one[8] = { /* (1<<256)%P */
-    0xfffffffd, 0x34786d38, 0xe41914ad, 0x992c350b,
-    0xffffffff, 0xffffffff, 0xffffffff, 0x3fffffff
-};
-static const uint32_t Pallas_Px2[8] = { /* left-aligned modulus */
-    0x00000002, 0x325a61da, 0x1299f237, 0x448d31f8,
-    0x00000000, 0x00000000, 0x00000000, 0x80000000
-};
-
 static uint32_t Pasta_M0 = 0xffffffff;
-typedef blst_256_t<255, Vesta_P, Pasta_M0,
-                Vesta_RR, Vesta_one,
-                Vesta_Px2> pallas_fq_mont;
-struct Pallas_Fq_G1 : public pallas_fq_mont {
-    using mem_t = Pallas_Fq_G1;
-    inline Pallas_Fq_G1() = default;
-    inline Pallas_Fq_G1(const pallas_fq_mont& a) : pallas_fq_mont(a) {}
-};
 typedef blst_256_t<255, Pallas_P, Pasta_M0,
                     Pallas_RR, Pallas_one,
                     Pallas_Px2> pallas_fr_mont;
-struct Pallas_Fr_G1 : public pallas_fr_mont {
-    using mem_t = Pallas_Fr_G1;
-    inline Pallas_Fr_G1() = default;
-    inline Pallas_Fr_G1(const pallas_fr_mont& a) : pallas_fr_mont(a) {}
+struct PALLAS_Fr_G1 : public pallas_fr_mont {
+    using mem_t = PALLAS_Fr_G1;
+    inline PALLAS_Fr_G1() = default;
+    inline PALLAS_Fr_G1(const pallas_fr_mont& a) : pallas_fr_mont(a) {}
 };
-}
-}
 
+typedef blst_256_t<255, Pallas_P, Pasta_M0,
+                    Pallas_RR, Pallas_one,
+                    Pallas_Px2> vesta_fq_mont;
+struct VESTA_Fq_G1 : public vesta_fq_mont {
+    using mem_t = VESTA_Fq_G1;
+    inline VESTA_Fq_G1() = default;
+    inline VESTA_Fq_G1(const vesta_fq_mont& a) : vesta_fq_mont(a) {}
+};
 
+static const vec256 Vesta_P = {
+    TO_LIMB_T(0x8c46eb2100000001), TO_LIMB_T(0x224698fc0994a8dd),
+    TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x4000000000000000)
+};
+static const vec256 Vesta_RR = { /* (1<<512)%P */
+    TO_LIMB_T(0xfc9678ff0000000f), TO_LIMB_T(0x67bb433d891a16e3),
+    TO_LIMB_T(0x7fae231004ccf590), TO_LIMB_T(0x096d41af7ccfdaa9)
+};
+static const vec256 Vesta_one = { /* (1<<256)%P */
+    TO_LIMB_T(0x5b2b3e9cfffffffd), TO_LIMB_T(0x992c350be3420567),
+    TO_LIMB_T(0xffffffffffffffff), TO_LIMB_T(0x3fffffffffffffff)
+};
+static const vec256 Vesta_Px2 = { /* left-aligned modulus */
+    TO_LIMB_T(0x188dd64200000002), TO_LIMB_T(0x448d31f8132951bb),
+    TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x8000000000000000)
+};
+typedef blst_256_t<255, Vesta_P, Pasta_M0,
+                Vesta_RR, Vesta_one,
+                Vesta_Px2> pallas_fq_mont;
+struct PALLAS_Fq_G1 : public pallas_fq_mont {
+    using mem_t = PALLAS_Fq_G1;
+    inline PALLAS_Fq_G1() = default;
+    inline PALLAS_Fq_G1(const pallas_fq_mont& a) : pallas_fq_mont(a) {}
+};
 
+typedef blst_256_t<255, Vesta_P, Pasta_M0,
+                Vesta_RR, Vesta_one,
+                Vesta_Px2> vesta_fr_mont;
+struct VESTA_Fr_G1 : public vesta_fr_mont {
+    using mem_t = VESTA_Fr_G1;
+    inline VESTA_Fr_G1() = default;
+    inline VESTA_Fr_G1(const vesta_fr_mont& a) : vesta_fr_mont(a) {}
+};
+
+} // namespace native
+} // namespace at

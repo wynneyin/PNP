@@ -2,8 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __SPPARK_UTIL_EXCEPTION_HPP__
-#define __SPPARK_UTIL_EXCEPTION_HPP__
+#pragma once
 
 #include <cstdio>
 #include <cstring>
@@ -56,4 +55,3 @@ inline std::string fmt(const char* fmt, Types... args)
     return ret;
 }
 
-#endif

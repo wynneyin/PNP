@@ -100,6 +100,7 @@ Tensor ntt_zkp_cpu(const Tensor& input) {
 }
 
 Tensor intt_zkp_cpu(const Tensor& input) {
+    std::cout<<"call intt on cpu"<<std::endl;
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
     iNTT(ptr, false, out_sizes);

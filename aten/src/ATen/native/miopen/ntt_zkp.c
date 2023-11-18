@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-// #include <endian.h>
-#include <machine/endian.h>
+#include <endian.h>
+//#include <machine/endian.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>

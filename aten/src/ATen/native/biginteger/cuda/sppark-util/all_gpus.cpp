@@ -1,5 +1,6 @@
 #include "gpu_t.cuh"
-
+namespace at { 
+namespace native {
 class gpus_t {
     std::vector<const gpu_t*> gpus;
 public:
@@ -54,3 +55,6 @@ const std::vector<const gpu_t*>& all_gpus()
 
 extern "C" bool cuda_available()
 {   return gpus_t::all().size() != 0;   }
+
+}
+}

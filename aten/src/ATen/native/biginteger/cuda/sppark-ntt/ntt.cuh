@@ -1,22 +1,23 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
-#ifndef __SPPARK_NTT_NTT_CUH__
-#define __SPPARK_NTT_NTT_CUH__
+#pragma once
 
 #include <cassert>
 #include <iostream>
 
-#include <util/exception.cuh>
-#include <util/rusterror.h>
-#include <util/gpu_t.cuh>
+#include <ATen/native/biginteger/cuda/sppark-util/exception.cuh>
+#include <ATen/native/biginteger/cuda/sppark-util/rusterror.h>
+#include <ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh>
 
-#include "parameters.cuh"
-#include "kernels.cu"
+#include <ATen/native/biginteger/cuda/ff/bls12-381.hpp>
 
-#ifndef __CUDA_ARCH__
+#include "ATen/native/biginteger/cuda/sppark-ntt/parameters.cuh"
+#include "ATen/native/biginteger/cuda/sppark-ntt/kernels.cuh"
+#include <cuda.h>
 
+
+// #ifndef __CUDA_ARCH__
+namespace at { 
+namespace native {
+    
 class NTT {
 public:
     enum class InputOutputOrder { NN, NR, RN, RR };
@@ -25,7 +26,7 @@ public:
     enum class Algorithm { GS, CT };
 
 protected:
-    static void bit_rev(fr_t* d_out, const fr_t* d_inp,
+    static void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
     {
         assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -42,18 +43,18 @@ protected:
                 (d_out, d_inp, lg_domain_size);
         else if (domain_size < 1024)
             bit_rev_permutation_aux
-                <<<1, domain_size / 8, domain_size * sizeof(fr_t), stream>>>
+                <<<1, domain_size / 8, domain_size * sizeof(BLS12_381_Fr_G1), stream>>>
                 (d_out, d_inp, lg_domain_size);
         else
             bit_rev_permutation_aux
-                <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(fr_t), stream>>>
+                <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(BLS12_381_Fr_G1), stream>>>
                 (d_out, d_inp, lg_domain_size);
 
         CUDA_OK(cudaGetLastError());
     }
 
 private:
-    static void LDE_powers(fr_t* inout, bool innt, bool bitrev,
+    static void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
                            uint32_t lg_domain_size, uint32_t lg_blowup,
                            stream_t& stream)
     {
@@ -75,7 +76,7 @@ private:
     }
 
 protected:
-    static void NTT_internal(fr_t* d_inout, uint32_t lg_domain_size,
+    static void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
                              InputOutputOrder order, Direction direction,
                              Type type, stream_t& stream)
     {
@@ -130,7 +131,7 @@ protected:
     }
 
 public:
-    static RustError Base(const gpu_t& gpu, fr_t* inout, uint32_t lg_domain_size,
+    static RustError Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                           InputOutputOrder order, Direction direction,
                           Type type)
     {
@@ -142,7 +143,7 @@ public:
             gpu.select();
 
             size_t domain_size = (size_t)1 << lg_domain_size;
-            dev_ptr_t<fr_t> d_inout{domain_size, gpu};
+            dev_ptr_t<BLS12_381_Fr_G1> d_inout{domain_size, gpu};
             // gpu.HtoD(&d_inout[0], inout, domain_size);
 
             cudaEvent_t start, stop;
@@ -176,7 +177,7 @@ public:
         return RustError{cudaSuccess};
     }
 
-    static RustError LDE(const gpu_t& gpu, fr_t* inout,
+    static RustError LDE(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
                          uint32_t lg_domain_size, uint32_t lg_blowup)
     {
         try {
@@ -184,8 +185,8 @@ public:
 
             size_t domain_size = (size_t)1 << lg_domain_size;
             size_t ext_domain_size = domain_size << lg_blowup;
-            dev_ptr_t<fr_t> d_ext_domain{ext_domain_size, gpu};
-            fr_t* d_domain = &d_ext_domain[ext_domain_size - domain_size];
+            dev_ptr_t<BLS12_381_Fr_G1> d_ext_domain{ext_domain_size, gpu};
+            BLS12_381_Fr_G1* d_domain = &d_ext_domain[ext_domain_size - domain_size];
 
             gpu.HtoD(&d_domain[0], inout, domain_size);
 
@@ -219,8 +220,8 @@ public:
 
 protected:
     static void LDE_launch(const gpu_t& gpu,
-                           fr_t* ext_domain_data, fr_t* domain_data,
-                           const fr_t (*gen_powers)[WINDOW_SIZE],
+                           BLS12_381_Fr_G1* ext_domain_data, BLS12_381_Fr_G1* domain_data,
+                           const BLS12_381_Fr_G1 (*gen_powers)[WINDOW_SIZE],
                            uint32_t lg_domain_size, uint32_t lg_blowup)
     {
         assert(lg_domain_size + lg_blowup <= MAX_LG_DOMAIN_SIZE);
@@ -247,13 +248,13 @@ protected:
         }
 
         gpu.launch_coop(LDE_spread_distribute_powers,
-                              num_blocks, block_size, sizeof(fr_t) * block_size,
+                              num_blocks, block_size, sizeof(BLS12_381_Fr_G1) * block_size,
                         ext_domain_data, domain_data, gen_powers,
                         lg_domain_size, lg_blowup);
     }
 
 public:
-    static RustError LDE_aux(const gpu_t& gpu, fr_t* inout,
+    static RustError LDE_aux(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
                              uint32_t lg_domain_size, uint32_t lg_blowup)
     {
         try {
@@ -262,10 +263,10 @@ public:
             size_t ext_domain_size = domain_size << lg_blowup;
             // The 2nd to last 'domain_size' chunk will hold the original data
             // The last chunk will get the bit reversed iNTT data
-            dev_ptr_t<fr_t> d_inout{ext_domain_size + domain_size, gpu}; // + domain_size for aux buffer
-            fr_t* aux_data = &d_inout[ext_domain_size];
-            fr_t* domain_data = &d_inout[ext_domain_size - domain_size]; // aligned to the end
-            fr_t* ext_domain_data = &d_inout[0];
+            dev_ptr_t<BLS12_381_Fr_G1> d_inout{ext_domain_size + domain_size, gpu}; // + domain_size for aux buffer
+            BLS12_381_Fr_G1* aux_data = &d_inout[ext_domain_size];
+            BLS12_381_Fr_G1* domain_data = &d_inout[ext_domain_size - domain_size]; // aligned to the end
+            BLS12_381_Fr_G1* ext_domain_data = &d_inout[0];
             gpu.HtoD(domain_data, inout, domain_size);
 
             NTT_internal(domain_data, lg_domain_size,
@@ -300,5 +301,22 @@ public:
     }
 };
 
-#endif
-#endif
+    
+// RustError compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+//                       NTT::InputOutputOrder ntt_order,
+//                       NTT::Direction ntt_direction,
+//                       NTT::Type ntt_type);
+
+RustError compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+                      NTT::InputOutputOrder ntt_order,
+                      NTT::Direction ntt_direction,
+                      NTT::Type ntt_type)
+{
+    auto& gpu = select_gpu(device_id);
+
+    return NTT::Base(gpu, inout, lg_domain_size,
+                     ntt_order, ntt_direction, ntt_type);
+}
+
+}
+}

@@ -1,9 +1,7 @@
 // Copyright Supranational LLC
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
-
-#ifndef __SPPARK_UTIL_RUSTERROR_H__
-#define __SPPARK_UTIL_RUSTERROR_H__
+#pragma once
 
 #ifdef __cplusplus
 # include <string>
@@ -11,7 +9,8 @@
 #else
 # include <string.h>
 #endif
-
+namespace at { 
+namespace native {
 struct RustError { /* to be returned exclusively by value */
     int code;
     char *message;
@@ -34,5 +33,5 @@ struct RustError { /* to be returned exclusively by value */
 #ifndef __cplusplus
 typedef struct RustError RustError;
 #endif
-
-#endif
+}
+}

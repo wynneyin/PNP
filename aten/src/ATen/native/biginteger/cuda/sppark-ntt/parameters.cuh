@@ -2,12 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __SPPARK_NTT_PARAMETERS_CUH__
-#define __SPPARK_NTT_PARAMETERS_CUH__
-
-// Maximum domain size supported. Can be adjusted at will, but with the
-// target field in mind. Most fields handle up to 2^32 elements, BLS12-377
-// can handle up to 2^47, alt_bn128 - 2^28...
+#pragma once
 #ifndef MAX_LG_DOMAIN_SIZE
 # if defined(FEATURE_BN254)
 #  define MAX_LG_DOMAIN_SIZE 28
@@ -27,28 +22,27 @@ typedef size_t index_t;
 #else
 # define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 2) / 3)
 #endif
-
 #define WINDOW_SIZE (1 << LG_WINDOW_SIZE)
 #define WINDOW_NUM ((MAX_LG_DOMAIN_SIZE + LG_WINDOW_SIZE - 1) / LG_WINDOW_SIZE)
 
-__device__ __constant__ fr_t forward_radix6_twiddles[32];
-__device__ __constant__ fr_t inverse_radix6_twiddles[32];
+#include "ATen/native/biginteger/cuda/sppark-ntt/parameters/bls12_381.h"
+#include "ATen/native/biginteger/cuda/sppark-ntt/gen_twiddles.cuh"
 
-#include "gen_twiddles.cu"
 
-#ifndef __CUDA_ARCH__
+// Maximum domain size supported. Can be adjusted at will, but with the
+// target field in mind. Most fields handle up to 2^32 elements, BLS12-377
+// can handle up to 2^47, alt_bn128 - 2^28...
+namespace at { 
+namespace native {
 
-# if defined(FEATURE_BLS12_377)
-#  include "parameters/bls12_377.h"
-# elif defined(FEATURE_BLS12_381)
-#  include "parameters/bls12_381.h"
-// # elif defined(FEATURE_PALLAS)
-// #  include "parameters/vesta.h"     // Fr for Pallas curve is Vesta
-// # elif defined(FEATURE_VESTA)
-// #  include "parameters/pallas.h"    // Fr for Vesta curve is Pallas
-# elif defined(FEATURE_BN254)
-#  include "parameters/alt_bn128.h"
-# endif
+
+__device__ __constant__ BLS12_381_Fr_G1 forward_radix6_twiddles[32];
+__device__ __constant__ BLS12_381_Fr_G1 inverse_radix6_twiddles[32];
+
+
+//#ifndef __CUDA_ARCH__
+
+
 
 class NTTParameters {
 private:
@@ -56,20 +50,20 @@ private:
     bool inverse;
 
 public:
-    fr_t (*partial_twiddles)[WINDOW_SIZE];
+    BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE];
 
-    fr_t* radix6_twiddles, * radix7_twiddles, * radix8_twiddles,
+    BLS12_381_Fr_G1* radix6_twiddles, * radix7_twiddles, * radix8_twiddles,
         * radix9_twiddles, * radix10_twiddles;
 
-    fr_t* radix6_twiddles_6, * radix6_twiddles_12, * radix7_twiddles_7,
+    BLS12_381_Fr_G1* radix6_twiddles_6, * radix6_twiddles_12, * radix7_twiddles_7,
         * radix8_twiddles_8, * radix9_twiddles_9;
 
-    fr_t (*partial_group_gen_powers)[WINDOW_SIZE]; // for LDE
+    BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE]; // for LDE
 
 private:
-    fr_t* twiddles_X(int num_blocks, int block_size, const fr_t& root)
+    BLS12_381_Fr_G1* twiddles_X(int num_blocks, int block_size, const BLS12_381_Fr_G1& root)
     {
-        fr_t* ret = (fr_t*)gpu.Dmalloc(num_blocks * block_size * sizeof(fr_t));
+        BLS12_381_Fr_G1* ret = (BLS12_381_Fr_G1*)gpu.Dmalloc(num_blocks * block_size * sizeof(BLS12_381_Fr_G1));
         generate_radixX_twiddles_X<<<16, block_size, 0, gpu>>>(ret, num_blocks, root);
         CUDA_OK(cudaGetLastError());
         return ret;
@@ -79,7 +73,7 @@ public:
     NTTParameters(const bool _inverse, int id)
         : gpu(select_gpu(id)), inverse(_inverse)
     {
-        const fr_t* roots = inverse ? inverse_roots_of_unity
+        const BLS12_381_Fr_G1* roots = inverse ? inverse_roots_of_unity
                                     : forward_roots_of_unity;
 
         const size_t blob_sz = 64 + 128 + 256 + 512 + 32;
@@ -87,7 +81,7 @@ public:
         CUDA_OK(cudaGetSymbolAddress((void**)&radix6_twiddles,
                                      inverse ? inverse_radix6_twiddles
                                              : forward_radix6_twiddles));
-        radix7_twiddles = (fr_t*)gpu.Dmalloc(blob_sz * sizeof(fr_t));
+        radix7_twiddles = (BLS12_381_Fr_G1*)gpu.Dmalloc(blob_sz * sizeof(BLS12_381_Fr_G1));
         radix8_twiddles = radix7_twiddles + 64;
         radix9_twiddles = radix8_twiddles + 128;
         radix10_twiddles = radix9_twiddles + 256;
@@ -101,7 +95,7 @@ public:
         CUDA_OK(cudaGetLastError());
 
         CUDA_OK(cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
-                                32 * sizeof(fr_t), cudaMemcpyDeviceToDevice,
+                                32 * sizeof(BLS12_381_Fr_G1), cudaMemcpyDeviceToDevice,
                                 gpu));
 
         radix6_twiddles_6 = twiddles_X(64, 64, roots[12]);
@@ -113,7 +107,7 @@ public:
         const size_t partial_sz = WINDOW_NUM * WINDOW_SIZE;
 
         partial_twiddles = reinterpret_cast<decltype(partial_twiddles)>
-                           (gpu.Dmalloc(2 * partial_sz * sizeof(fr_t)));
+                           (gpu.Dmalloc(2 * partial_sz * sizeof(BLS12_381_Fr_G1)));
         partial_group_gen_powers = &partial_twiddles[WINDOW_NUM];
 
         std::cout << "window number: " << WINDOW_NUM << std::endl;
@@ -180,5 +174,6 @@ public:
     }
 };
 
-#endif
-#endif /* __NTT_PARAMETERS_CUH__ */
+//#endif
+}
+}

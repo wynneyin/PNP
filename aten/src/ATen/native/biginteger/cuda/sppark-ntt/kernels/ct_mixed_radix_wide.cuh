@@ -1,16 +1,21 @@
 // Copyright Supranational LLC
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
+#pragma once
+#include <ATen/native/biginteger/cuda/ff/bls12-381.hpp>
 
+
+namespace at { 
+namespace native {
 template <int intermediate_mul>
 __launch_bounds__(768, 1) __global__
 void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
              const unsigned int stage, const unsigned int iterations,
-             fr_t* d_inout, const fr_t (*d_partial_twiddles)[WINDOW_SIZE],
-             const fr_t* d_radix6_twiddles, const fr_t* d_radixX_twiddles,
-             const fr_t* d_intermediate_twiddles,
+             BLS12_381_Fr_G1* d_inout, const BLS12_381_Fr_G1 (*d_partial_twiddles)[WINDOW_SIZE],
+             const BLS12_381_Fr_G1* d_radix6_twiddles, const BLS12_381_Fr_G1* d_radixX_twiddles,
+             const BLS12_381_Fr_G1* d_intermediate_twiddles,
              const unsigned int intermediate_twiddle_shift,
-             const bool is_intt, const fr_t d_domain_size_inverse)
+             const bool is_intt, const BLS12_381_Fr_G1 d_domain_size_inverse)
 {
 #if (__CUDACC_VER_MAJOR__-0) >= 11
     __builtin_assume(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -35,8 +40,8 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     idx0 = idx0 * 2 + thread_ntt_pos;
     index_t idx1 = idx0 + inp_ntt_size;
 
-    fr_t r0 = d_inout[idx0];
-    fr_t r1 = d_inout[idx1];
+    BLS12_381_Fr_G1 r0 = d_inout[idx0];
+    BLS12_381_Fr_G1 r1 = d_inout[idx1];
 
     if (tid == 0) {
         printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
@@ -56,7 +61,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         index_t root_idx0 = bit_rev(thread_ntt_idx, nbits) * thread_ntt_pos;
         index_t root_idx1 = thread_ntt_pos << (nbits - 1);
 
-        fr_t first_root, second_root;
+        BLS12_381_Fr_G1 first_root, second_root;
         get_intermediate_roots(first_root, second_root,
                                root_idx0, root_idx1, d_partial_twiddles);
         second_root *= first_root;
@@ -71,15 +76,15 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         index_t root_idx0 = bit_rev(thread_ntt_idx, nbits);
         index_t root_idx1 = bit_rev(thread_ntt_idx + 1, nbits);
 
-        fr_t t0 = d_intermediate_twiddles[(thread_ntt_pos << radix) + root_idx0];
-        fr_t t1 = d_intermediate_twiddles[(thread_ntt_pos << radix) + root_idx1];
+        BLS12_381_Fr_G1 t0 = d_intermediate_twiddles[(thread_ntt_pos << radix) + root_idx0];
+        BLS12_381_Fr_G1 t1 = d_intermediate_twiddles[(thread_ntt_pos << radix) + root_idx1];
 
         r0 *= t0;
         r1 *= t1;
     }
 
     {
-        fr_t t = r1;
+        BLS12_381_Fr_G1 t = r1;
         r1 = r0 - t;
         r0 = r0 + t;
     }
@@ -91,10 +96,10 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         bool pos = rank < laneMask;
 
 #ifdef __CUDA_ARCH__
-        fr_t x = fr_t::csel(r1, r0, pos);
+        BLS12_381_Fr_G1 x = BLS12_381_Fr_G1::csel(r1, r0, pos);
         shfl_bfly(x, laneMask);
-        r0 = fr_t::csel(x, r0, !pos);
-        r1 = fr_t::csel(x, r1, pos);
+        r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
+        r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
         if (pos)
             swap(idx0, idx1);
@@ -102,7 +107,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         if (pos)
             swap(idx0, idx1);
 
-        fr_t t = d_radix6_twiddles[rank << (6 - (s + 1))];
+        BLS12_381_Fr_G1 t = d_radix6_twiddles[rank << (6 - (s + 1))];
         t *= r1;
 
         r1 = r0 - t;
@@ -115,20 +120,20 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         unsigned int rank = threadIdx.x & thrdMask;
         bool pos = rank < laneMask;
 
-        fr_t t = d_radixX_twiddles[rank << (radix - (s + 1))];
+        BLS12_381_Fr_G1 t = d_radixX_twiddles[rank << (radix - (s + 1))];
 
         // shfl_bfly through the shared memory
-        extern __shared__ fr_t shared_exchange[];
+        extern __shared__ BLS12_381_Fr_G1 shared_exchange[];
         extern __shared__ index_t shared_exchange_idx[];
 
 #ifdef __CUDA_ARCH__
-        fr_t x = fr_t::csel(r1, r0, pos);
+        BLS12_381_Fr_G1 x = BLS12_381_Fr_G1::csel(r1, r0, pos);
         __syncthreads();
         shared_exchange[threadIdx.x] = x;
         __syncthreads();
         x = shared_exchange[threadIdx.x ^ laneMask];
-        r0 = fr_t::csel(x, r0, !pos);
-        r1 = fr_t::csel(x, r1, pos);
+        r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
+        r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
         if (pos)
             swap(idx0, idx1);
@@ -167,9 +172,9 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 }
 
 #define NTT_ARGUMENTS \
-        unsigned int, unsigned int, unsigned int, unsigned int, fr_t*, \
-        const fr_t (*)[WINDOW_SIZE], const fr_t*, const fr_t*, const fr_t*, \
-        unsigned int, bool, fr_t
+        unsigned int, unsigned int, unsigned int, unsigned int, BLS12_381_Fr_G1*, \
+        const BLS12_381_Fr_G1 (*)[WINDOW_SIZE], const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, \
+        unsigned int, bool, BLS12_381_Fr_G1
 
 template __global__ void _CT_NTT<0>(NTT_ARGUMENTS);
 template __global__ void _CT_NTT<1>(NTT_ARGUMENTS);
@@ -177,10 +182,10 @@ template __global__ void _CT_NTT<2>(NTT_ARGUMENTS);
 
 #undef NTT_ARGUMENTS
 
-#ifndef __CUDA_ARCH__
+//#ifndef __CUDA_ARCH__
 
 class CT_launcher {
-    fr_t* d_inout;
+    BLS12_381_Fr_G1* d_inout;
     const int lg_domain_size;
     bool is_intt;
     int stage;
@@ -188,7 +193,7 @@ class CT_launcher {
     const cudaStream_t& stream;
 
 public:
-    CT_launcher(fr_t* d_ptr, int lg_dsz, bool intt,
+    CT_launcher(BLS12_381_Fr_G1* d_ptr, int lg_dsz, bool intt,
                 const NTTParameters& params, const cudaStream_t& s)
       : d_inout(d_ptr), lg_domain_size(lg_dsz), is_intt(intt), stage(0),
         ntt_parameters(params), stream(s)
@@ -215,12 +220,12 @@ public:
 
         assert(num_blocks == (unsigned int)num_blocks);
 
-        fr_t* d_radixX_twiddles = nullptr;
-        fr_t* d_intermediate_twiddles = nullptr;
+        BLS12_381_Fr_G1* d_radixX_twiddles = nullptr;
+        BLS12_381_Fr_G1* d_intermediate_twiddles = nullptr;
         unsigned int intermediate_twiddle_shift = 0;
 
         #define NTT_CONFIGURATION \
-                num_blocks, block_size, sizeof(fr_t) * block_size, stream
+                num_blocks, block_size, sizeof(BLS12_381_Fr_G1) * block_size, stream
 
         #define NTT_ARGUMENTS radix, lg_domain_size, stage, iterations, \
                 d_inout, ntt_parameters.partial_twiddles, \
@@ -321,7 +326,7 @@ public:
     }
 };
 
-void CT_NTT(fr_t* d_inout, const int lg_domain_size, bool intt,
+void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, bool intt,
             const NTTParameters& ntt_parameters, const cudaStream_t& stream)
 {
     CT_launcher params{d_inout, lg_domain_size, intt, ntt_parameters, stream};
@@ -351,5 +356,6 @@ void CT_NTT(fr_t* d_inout, const int lg_domain_size, bool intt,
         assert(false);
     }
 }
-
-#endif
+//#endif
+}
+}

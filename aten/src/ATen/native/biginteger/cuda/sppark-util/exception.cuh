@@ -2,9 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __SPPARK_UTIL_EXCEPTION_CUH__
-#define __SPPARK_UTIL_EXCEPTION_CUH__
 
+#pragma once
 #include "exception.hpp"
 
 using cuda_error = sppark_error;
@@ -20,4 +19,4 @@ using cuda_error = sppark_error;
     }                                                       \
 } while(0)
 
-#endif
+

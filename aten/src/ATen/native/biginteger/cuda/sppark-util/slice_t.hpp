@@ -14,7 +14,8 @@
 # endif
 # define inline inline __host__ __device__
 #endif
-
+namespace at { 
+namespace native {
 // A simple way to pack a constant pointer and array's size length,
 // and to "borrow" std::vector<T>&...
 template<typename T> class slice_t {
@@ -32,7 +33,8 @@ public:
     inline size_t size() const                  { return nelems; }
     inline const T& operator[](size_t i) const  { return ptr[i]; }
 };
-
+}
+}
 #ifdef __CUDACC__
 # undef inline
 # ifdef slice_t_saved_inline

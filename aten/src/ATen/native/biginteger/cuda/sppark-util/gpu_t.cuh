@@ -2,8 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef __SPPARK_UTIL_GPU_T_CUH__
-#define __SPPARK_UTIL_GPU_T_CUH__
+#pragma once
 
 #ifndef __CUDACC__
 # include <cuda_runtime.h>
@@ -16,6 +15,8 @@
 #ifndef WARP_SZ
 # define WARP_SZ 32
 #endif
+namespace at { 
+namespace native {
 
 class gpu_t;
 size_t ngpus();
@@ -334,5 +335,6 @@ public:
     inline const T& operator[](size_t i) const  { return d_ptr[i]; }
     inline T& operator[](size_t i)              { return d_ptr[i]; }
 };
+}
+}
 
-#endif

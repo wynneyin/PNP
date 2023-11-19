@@ -84,7 +84,6 @@ Tensor intt_zkp_gpu(const Tensor& inout) {
         NTT::Direction::inverse,
         NTT::Type::standard
     );
-    std::cout<<"error : "<<err.message<<std::endl;
     });
     return inout;
 }

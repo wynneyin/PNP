@@ -44,18 +44,9 @@ typedef blst_384_t<381, BLS12_381_P, 0x89f3fffcfffcfffd,
                         BLS12_381_RR, BLS12_381_ONE> bls12_381_fq_mont;
 struct BLS12_381_Fq_G1 : public bls12_381_fq_mont {
     using mem_t = BLS12_381_Fq_G1;
-<<<<<<< HEAD
-    inline BLS12_381_Fq_G1() {}
-    inline BLS12_381_Fq_G1(const bls12_381_fq_mont& a) : bls12_381_fq_mont(a) {}
-};
-
-}
-}
-=======
     inline BLS12_381_Fq_G1() = default;
     inline BLS12_381_Fq_G1(const bls12_381_fq_mont& a) : bls12_381_fq_mont(a) {}
 };
 
 } // namespace native
 } // namespace at
->>>>>>> 151f7c95573b88a9208020b3f739664967a1d3d9

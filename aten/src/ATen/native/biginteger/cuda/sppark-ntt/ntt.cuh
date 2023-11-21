@@ -56,7 +56,7 @@ protected:
 private:
     static void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
                            uint32_t lg_domain_size, uint32_t lg_blowup,
-                           stream_t& stream)
+                           stream_t& stream, bool ext_pow = false)
     {
         size_t domain_size = (size_t)1 << lg_domain_size;
         const auto gen_powers =
@@ -64,13 +64,13 @@ private:
 
         if (domain_size < WARP_SZ)
             LDE_distribute_powers<<<1, domain_size, 0, stream>>>
-                                 (inout, lg_blowup, bitrev, gen_powers);
+                                 (inout, lg_blowup, bitrev, gen_powers, ext_pow);
         else if (domain_size < 512)
             LDE_distribute_powers<<<domain_size / WARP_SZ, WARP_SZ, 0, stream>>>
-                                 (inout, lg_blowup, bitrev, gen_powers);
+                                 (inout, lg_blowup, bitrev, gen_powers, ext_pow);
         else
             LDE_distribute_powers<<<domain_size / 512, 512, 0, stream>>>
-                                 (inout, lg_blowup, bitrev, gen_powers);
+                                 (inout, lg_blowup, bitrev, gen_powers, ext_pow);
 
         CUDA_OK(cudaGetLastError());
     }
@@ -78,7 +78,8 @@ private:
 protected:
     static void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
                              InputOutputOrder order, Direction direction,
-                             Type type, stream_t& stream)
+                             Type type, stream_t& stream,
+                             bool coset_ext_pow = false)
     {
         // Pick an NTT algorithm based on the input order and the desired output
         // order of the data. In certain cases, bit reversal can be avoided which
@@ -112,7 +113,8 @@ protected:
         }
 
         if (!intt && type == Type::coset)
-            LDE_powers(d_inout, intt, bitrev, lg_domain_size, 0, stream);
+            LDE_powers(d_inout, intt, bitrev, lg_domain_size, 0, stream,
+                       coset_ext_pow);
 
         switch (algorithm) {
             case Algorithm::GS:
@@ -124,7 +126,8 @@ protected:
         }
 
         if (intt && type == Type::coset)
-            LDE_powers(d_inout, intt, !bitrev, lg_domain_size, 0, stream);
+            LDE_powers(d_inout, intt, !bitrev, lg_domain_size, 0, stream,
+                       coset_ext_pow);
 
         if (order == InputOutputOrder::RR)
             bit_rev(d_inout, d_inout, lg_domain_size, stream);
@@ -133,7 +136,7 @@ protected:
 public:
     static RustError Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                           InputOutputOrder order, Direction direction,
-                          Type type)
+                          Type type, bool coset_ext_pow = false)
     {
         if (lg_domain_size == 0)
             return RustError{cudaSuccess};
@@ -143,7 +146,7 @@ public:
             gpu.select();
 
             size_t domain_size = (size_t)1 << lg_domain_size;
-            dev_ptr_t<BLS12_381_Fr_G1> d_inout{domain_size, gpu};
+            // dev_ptr_t<BLS12_381_Fr_G1> d_inout{domain_size, gpu};
             // gpu.HtoD(&d_inout[0], inout, domain_size);
 
             cudaEvent_t start, stop;
@@ -151,7 +154,8 @@ public:
             cudaEventCreate(&stop);
             cudaEventRecord(start, 0);
             
-            NTT_internal(&d_inout[0], lg_domain_size, order, direction, type, gpu);
+            NTT_internal(inout, lg_domain_size, order, direction, type, gpu,
+                        coset_ext_pow);
 
             // gpu.DtoH(inout, &d_inout[0], domain_size);
             gpu.sync();

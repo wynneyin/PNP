@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
-#include <ATen/native/biginteger/cuda/ff/bls12-381.hpp>
+#include <ATen/native/biginteger/cuda/sppark-ntt/parameters/bls12_381.h>
 
 
 namespace at { 
@@ -43,15 +43,15 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     BLS12_381_Fr_G1 r0 = d_inout[idx0];
     BLS12_381_Fr_G1 r1 = d_inout[idx1];
 
-    if (tid == 0) {
-        printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
-    if (tid == 1) {
-        printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
-    if (tid == gridDim.x*blockDim.x - 1) {
-        printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
+    // if (tid == 0) {
+    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
+    // if (tid == 1) {
+    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
+    // if (tid == gridDim.x*blockDim.x - 1) {
+    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
 
     if (intermediate_mul == 1) {
         unsigned int diff_mask = (1 << (iterations - 1)) - 1;
@@ -101,11 +101,11 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
-        if (pos)
-            swap(idx0, idx1);
-        shfl_bfly(idx0, laneMask);
-        if (pos)
-            swap(idx0, idx1);
+        // if (pos)
+        //     swap(idx0, idx1);
+        // shfl_bfly(idx0, laneMask);
+        // if (pos)
+        //     swap(idx0, idx1);
 
         BLS12_381_Fr_G1 t = d_radix6_twiddles[rank << (6 - (s + 1))];
         t *= r1;
@@ -124,7 +124,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 
         // shfl_bfly through the shared memory
         extern __shared__ BLS12_381_Fr_G1 shared_exchange[];
-        extern __shared__ index_t shared_exchange_idx[];
+        // extern __shared__ index_t shared_exchange_idx[];
 
 #ifdef __CUDA_ARCH__
         BLS12_381_Fr_G1 x = BLS12_381_Fr_G1::csel(r1, r0, pos);
@@ -135,37 +135,46 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
-        if (pos)
-            swap(idx0, idx1);
-        __syncthreads();
-        shared_exchange_idx[threadIdx.x] = idx0;
-        __syncthreads();
-        idx0 = shared_exchange_idx[threadIdx.x ^ laneMask];
-        if (pos)
-            swap(idx0, idx1);
+        // if (pos)
+        //     swap(idx0, idx1);
+        // __syncthreads();
+        // shared_exchange_idx[threadIdx.x] = idx0;
+        // __syncthreads();
+        // idx0 = shared_exchange_idx[threadIdx.x ^ laneMask];
+        // if (pos)
+        //     swap(idx0, idx1);
 
         t *= r1;
 
         r1 = r0 - t;
         r0 = r0 + t;
     }
-
+    
     if (is_intt && (stage + iterations) == lg_domain_size) {
         r0 *= d_domain_size_inverse;
         r1 *= d_domain_size_inverse;
     }
 
-    if (tid == 0) {
-        printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
+    // if (tid == 0) {
+    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
 
-    if (tid == 1) {
-        printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
+    // if (tid == 1) {
+    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
 
-    if (tid == gridDim.x*blockDim.x - 1) {
-        printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    }
+    // if (tid == gridDim.x*blockDim.x - 1) {
+    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
+    // }
+
+    // rotate "iterations" bits in indices
+    index_t mask = ((index_t)1 << (stage + iterations)) - ((index_t)1 << stage);
+    index_t rotw = idx0 & mask;
+    rotw = (rotw >> 1) | (rotw << (iterations - 1));
+    idx0 = (idx0 & ~mask) | (rotw & mask);
+    rotw = idx1 & mask;
+    rotw = (rotw >> 1) | (rotw << (iterations - 1));
+    idx1 = (idx1 & ~mask) | (rotw & mask);
 
     d_inout[idx0] = r0;
     d_inout[idx1] = r1;

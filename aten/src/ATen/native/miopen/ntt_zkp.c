@@ -23,50 +23,50 @@ struct AffinePoint {
 };
 
 uint64_t omega10[4]={
-    11864420382399758890,
-    18195565927427728881,
-    16759393787988053888,
+    11864420382399758890u,
+    18195565927427728881u,
+    16759393787988053888u,
     8029136087195778842
 };
 uint64_t omega10_inv[4]={
-    3122910594386215040,
+    3122910594386215040u,
     685422923818215260,
-    1617402986054825192,
+    1617402986054825192u,
     5362466006817758141
 };
 
 uint64_t omega10_coset[4]={
-    11762601369654853577,
-    4754331843865155954,
+    11762601369654853577u,
+    4754331843865155954u,
     458560669857420187,
-    8204223352538390613
+    8204223352538390613u
 };
 
 uint64_t omega10_inv_coset[4]={
     5800001874483830389,
-    16965619609244388378,
+    16965619609244388378u,
     6936327223020705784,
     2600221238559039842
 };
 
 uint64_t generator10_inv[4]={
-    15811494917868205788,
-    16624336857528583898,
-    17920762862402342329,
+    15811494917868205788u,
+    16624336857528583898u,
+    17920762862402342329u,
     7408687358795335574
 };
 
-uint64_t size_inv_10[4]={0, 0, 0, 18014398509481984};
+uint64_t size_inv_10[4]={0, 0, 0, 18014398509481984u};
 
 uint64_t size_inv_10_coset[4]={0, 0, 0, 2251799813685248};
 
 const uint64_t MODULUS_r[4] = { 
-    0xffffffff00000001,
-    0x53bda402fffe5bfe,
-    0x3339d80809a1d805,
-    0x73eda753299d7d48};
+    0xffffffff00000001u,
+    0x53bda402fffe5bfeu,
+    0x3339d80809a1d805u,
+    0x73eda753299d7d48u};
 
-const uint64_t INV_r = 0xfffffffeffffffff;
+const uint64_t INV_r = 0xfffffffeffffffffu;
 
 const int MODULUS_BITS_r = 255;
 
@@ -100,34 +100,34 @@ const uint64_t GENERATOR_r[4]={
 };
 
 const uint64_t TWO_ADIC_ROOT_OF_UNITY_r[4]={
-    0xb9b58d8c5f0e466a,
-    0x5b1b4c801819d7ec,
+    0xb9b58d8c5f0e466au,
+    0x5b1b4c801819d7ecu,
     0xaf53ae352a31e64,
-    0x5bf3adda19e9b27b
+    0x5bf3adda19e9b27bu
 };
 
 ///Fq parameters
 //Fq modulus 
 const uint64_t MODULUS_q[6] = { 
-    0xb9feffffffffaaab,
-    0x1eabfffeb153ffff,
-    0x6730d2a0f6b0f624,
-    0x64774b84f38512bf,
-    0x4b1ba7b6434bacd7,
-    0x1a0111ea397fe69a
+    0xb9feffffffffaaabu,
+    0x1eabfffeb153ffffu,
+    0x6730d2a0f6b0f624u,
+    0x64774b84f38512bfu,
+    0x4b1ba7b6434bacd7u,
+    0x1a0111ea397fe69au
 };
 
 const uint64_t TWO_ADIC_ROOT_OF_UNITY_q[6] = { 
-    0x43f5fffffffcaaae,
-    0x32b7fff2ed47fffd,
+    0x43f5fffffffcaaaeu,
+    0x32b7fff2ed47fffdu,
     0x7e83a49a2e99d69,
-    0xeca8f3318332bb7a,
-    0xef148d1ea0f4c069,
+    0xeca8f3318332bb7au,
+    0xef148d1ea0f4c069u,
     0x40ab3263eff0206
 };
 
 //Fq INV = -(q^{-1} mod 2^64) mod 2^64
-const uint64_t INV_q= 0x87d20782e4866389;
+const uint64_t INV_q= 0x87d20782e4866389u;
 
 const int MODULUS_BITS_q = 381;
 
@@ -141,22 +141,22 @@ const int REPR_SHAVE_BITS_q = 3;
 
 //Fq R = 2^256 mod q
 const uint64_t R_q[6]={
-    0x760900000002fffd,
-    0xebf4000bc40c0002,
-    0x5f48985753c758ba,
-    0x77ce585370525745,
-    0x5c071a97a256ec6d,
-    0x15f65ec3fa80e493
+    0x760900000002fffdu,
+    0xebf4000bc40c0002u,
+    0x5f48985753c758bau,
+    0x77ce585370525745u,
+    0x5c071a97a256ec6du,
+    0x15f65ec3fa80e493u
 };
 
 /// R^2 = 2^512 mod q
 const uint64_t R2_q[6]={
-    0xf4df1f341c341746,
+    0xf4df1f341c341746u,
     0xa76e6a609d104f1,
-    0x8de5476c4c95b6d5,
-    0x67eb88a9939d83c0,
-    0x9a793e85b519952d,
-    0x11988fe592cae3aa
+    0x8de5476c4c95b6d5u,
+    0x67eb88a9939d83c0u,
+    0x9a793e85b519952du,
+    0x11988fe592cae3aau
 };
 
 void sbb(uint64_t a, uint64_t b, uint64_t borrow, uint64_t* result, uint64_t* new_borrow);

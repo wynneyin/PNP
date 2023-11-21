@@ -69,23 +69,40 @@ Tensor ntt_zkp_gpu(const Tensor& inout) {
     return inout;
 }
 
+template <typename T>
+__global__ void to_base_kernel(const int64_t N, T* data) {
+  int64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+  if(i < N) {
+    data[i].from();
+  }
+}
+
 Tensor intt_zkp_gpu(const Tensor& inout) {
+    Tensor output = inout.clone();
     std::cout<<"call intt on gpu"<<std::endl;
-    auto len = inout.numel() / 4;
-    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "to_mont_cuda", [&] {
-    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
-    uint32_t lg_domain_size = log2(len);
-    std::cout<<"lg_domain_size = "<<lg_domain_size<<std::endl;
-    RustError err = compute_ntt(
-        0,
-        self_ptr,
-        lg_domain_size,
-        NTT::InputOutputOrder::NN,
-        NTT::Direction::inverse,
-        NTT::Type::standard
-    );
+    auto len = output.numel()/4;
+    AT_DISPATCH_FR_MONT_TYPES(output.scalar_type(), "to_mont_cuda", [&] {
+        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(output.mutable_data_ptr<scalar_t>());
+        uint32_t lg_domain_size = log2(len);
+        RustError err = compute_ntt(
+            0,
+            self_ptr,
+            lg_domain_size,
+            NTT::InputOutputOrder::NN,
+            NTT::Direction::inverse,
+            NTT::Type::standard
+        );
+
+        // int64_t N = output.numel() / num_uint64(output.scalar_type());
+        // TORCH_INTERNAL_ASSERT(N > 0 && N <= std::numeric_limits<int32_t>::max());
+        // int64_t grid = (N + block_work_size() - 1) / block_work_size();
+        // auto stream = at::cuda::getCurrentCUDAStream();
+        // to_base_kernel<<<grid, num_threads(), 0, stream>>>(N, self_ptr);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+
+
     });
-    return inout;
+    return output;
 }
 
 Tensor coset_ntt_zkp_gpu(const Tensor& inout) {

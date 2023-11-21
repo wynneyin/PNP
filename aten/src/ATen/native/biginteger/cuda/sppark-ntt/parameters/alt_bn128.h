@@ -1,7 +1,7 @@
 // Copyright Supranational LLC
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
-
+#pragma once
 const fr_t group_gen = fr_t((vec256){ 0x1b0d0ef99fffffe6, 0xeaba68a3a32a913f, 0x47d8eb76d8dd0689, 0x15d0085520f5bbc3 });
 const fr_t group_gen_inverse = fr_t((vec256){ 0xd745397409999999, 0xb4ada7d483c3efa8, 0xc49ca2f8e57f3161, 0x162a3754ac156cb3 });
 

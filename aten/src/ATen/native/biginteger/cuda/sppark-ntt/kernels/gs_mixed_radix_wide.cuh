@@ -24,24 +24,17 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 #endif
     const index_t tid = threadIdx.x + blockDim.x * (index_t)blockIdx.x;
 
-
-
-    const index_t inp_ntt_size = (index_t)1 << (stage - 1);
-    //const index_t out_ntt_size = (index_t)1 << (stage - iterations - 1); // TODO: UNUSED
+    const index_t inp_mask = ((index_t)1 << (stage - 1)) - 1;
+    const index_t out_mask = ((index_t)1 << (stage - iterations)) - 1;
 
     // rearrange |tid|'s bits
-    index_t idx0 = (tid & ~(inp_ntt_size - 1)) * 2;
-    idx0 += (tid << (stage - iterations)) & (inp_ntt_size - 1);
-    idx0 += tid >> (iterations - 1);
-    idx0 -= ((tid >> (stage - 1)) << (stage - iterations));
-    index_t idx1 = idx0 + inp_ntt_size;
+    index_t idx0 = (tid & ~inp_mask) * 2;
+    idx0 += (tid << (stage - iterations)) & inp_mask;
+    idx0 += (tid >> (iterations - 1)) & out_mask;
+    index_t idx1 = idx0 + ((index_t)1 << (stage - 1));
 
     BLS12_381_Fr_G1 r0 = d_inout[idx0];
     BLS12_381_Fr_G1 r1 = d_inout[idx1];
-
-    if (tid == 0) {
-        printf("my idx0 is %u, idx1 is %u", idx0, idx1);
-    }
 
     for (int s = iterations; --s >= 6;) {
         unsigned int laneMask = 1 << (s - 1);
@@ -55,7 +48,6 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r1 = t;
 
         extern __shared__ BLS12_381_Fr_G1 shared_exchange[];
-        extern __shared__ index_t shared_exchange_idx[];
 
         bool pos = rank < laneMask;
 #ifdef __CUDA_ARCH__
@@ -67,14 +59,6 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(t, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(t, r1, pos);
 #endif
-        if (pos)
-            swap(idx0, idx1);
-        __syncthreads();
-        shared_exchange_idx[threadIdx.x] = idx0;
-        __syncthreads();
-        idx0 = shared_exchange_idx[threadIdx.x ^ laneMask];
-        if (pos)
-            swap(idx0, idx1);
     }
 
     for (int s = min(iterations, 6); --s >= 1;) {
@@ -95,11 +79,6 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(t, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(t, r1, pos);
 #endif
-        if (pos)
-            swap(idx0, idx1);
-        shfl_bfly(idx0, laneMask);
-        if (pos)
-            swap(idx0, idx1);
     }
 
     {
@@ -109,7 +88,7 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     }
 
     if (intermediate_mul == 1) {
-        index_t thread_ntt_pos = (tid & (inp_ntt_size - 1)) >> (iterations - 1);
+        index_t thread_ntt_pos = (tid & inp_mask) >> (iterations - 1);
         unsigned int diff_mask = (1 << (iterations - 1)) - 1;
         unsigned int thread_ntt_idx = (tid & diff_mask) * 2;
         unsigned int nbits = MAX_LG_DOMAIN_SIZE - (stage - iterations);
@@ -125,7 +104,7 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 *= first_root;
         r1 *= second_root;
     } else if (intermediate_mul == 2) {
-        index_t thread_ntt_pos = (tid & (inp_ntt_size - 1)) >> (iterations - 1);
+        index_t thread_ntt_pos = (tid & inp_mask) >> (iterations - 1);
         unsigned int diff_mask = (1 << (iterations - 1)) - 1;
         unsigned int thread_ntt_idx = (tid & diff_mask) * 2;
         unsigned int nbits = intermediate_twiddle_shift + iterations;
@@ -145,6 +124,15 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r1 *= d_domain_size_inverse;
     }
 
+    // rotate "iterations" bits in indices
+    index_t mask = ((index_t)1 << stage) - ((index_t)1 << (stage - iterations));
+    index_t rotw = idx0 & mask;
+    rotw = (rotw << 1) | (rotw >> (iterations - 1));
+    idx0 = (idx0 & ~mask) | (rotw & mask);
+    rotw = idx1 & mask;
+    rotw = (rotw << 1) | (rotw >> (iterations - 1));
+    idx1 = (idx1 & ~mask) | (rotw & mask);
+
     d_inout[idx0] = r0;
     d_inout[idx1] = r1;
 }
@@ -160,7 +148,7 @@ template __global__ void _GS_NTT<2>(NTT_ARGUMENTS);
 
 #undef NTT_ARGUMENTS
 
-//#ifndef __CUDA_ARCH__
+// #ifndef __CUDA_ARCH__
 
 class GS_launcher {
     BLS12_381_Fr_G1* d_inout;
@@ -329,6 +317,7 @@ void GS_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_in
         assert(false);
     }
 }
-//#endif
+
+// #endif
 }
 }

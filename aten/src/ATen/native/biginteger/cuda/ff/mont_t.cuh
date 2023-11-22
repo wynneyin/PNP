@@ -37,9 +37,9 @@ public:
     static constexpr size_t __device__ bit_length() { return N; }
     static const uint32_t degree = 1;
     using mem_t = mont_t;
-public:
+protected:
     static const size_t n = (N+31)/32;
-public:
+private:
     uint32_t even[n];
 
     static inline void mul_n(uint32_t* acc, const uint32_t* a, uint32_t bi, size_t _n=(N+31)/32)
@@ -71,7 +71,7 @@ public:
     }
 
     class wide_t {
-    public:
+    private:
         union {
             uint32_t even[2*n];
             mont_t s[2];
@@ -90,7 +90,7 @@ public:
 
         inline wide_t() {}
 
-    public:
+    private:
         static inline void mad_row(uint32_t* odd, uint32_t* even,
                                    const uint32_t* a, uint32_t bi, size_t _n=(N+31)/32)
         {
@@ -124,7 +124,7 @@ public:
             asm("addc.u32 %0, %0, 0;" : "+r"(even[2*n-1]));
         }
 
-    public:
+    private:
         static inline void qad_row(uint32_t* odd, uint32_t* even,
                                    const uint32_t* a, uint32_t bi, size_t n)
         {
@@ -188,7 +188,7 @@ public:
         }
     };
 
-public:
+private:
     inline operator const uint32_t*() const             { return even;    }
     inline operator uint32_t*()                         { return even;    }
 
@@ -200,7 +200,6 @@ public:
     inline mont_t() {}
     inline mont_t(const uint32_t *p)
     {
-        // std::cout << "I am here!" << std::endl;
         for (size_t i = 0; i < n; i++)
             even[i] = p[i];
     }
@@ -337,7 +336,7 @@ public:
     inline mont_t operator-() const
     {   return cneg(*this, true);   }
 
-public:
+private:
     static inline void madc_n_rshift(uint32_t* odd, const uint32_t *a, uint32_t bi)
     {
         for (size_t j = 0; j < n-2; j += 2)
@@ -566,7 +565,7 @@ public:
         return ret;
     }
 
-public:
+private:
     static inline void mul_by_1_row(uint32_t* even, uint32_t* odd, bool first=false)
     {
         uint32_t mi;
@@ -761,7 +760,7 @@ public:
         return ret;
     }
 
-public:
+protected:
     template<typename vec_t>
     static inline vec_t shfl_xor(const vec_t& a, uint32_t idx = 1)
     {
@@ -771,7 +770,7 @@ public:
         return ret;
     }
 
-public:
+private:
     // Euclidean inversion based on https://eprint.iacr.org/2020/972
     // and <blst>/src/no_asm.h.
 
@@ -1010,7 +1009,7 @@ public:
         return odd[2*n-1];
     }
 
-public:
+protected:
     /*
      * Even thread holds |a| and |u|, while odd one - |b| and |v|. They need
      * to exchange the values, but then perform the multiplications in

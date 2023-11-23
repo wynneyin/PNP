@@ -60,6 +60,8 @@ public:
 
     BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE]; // for LDE
 
+    uint32_t* Domain_size_inverse;
+    
 private:
     BLS12_381_Fr_G1* twiddles_X(int num_blocks, int block_size, const BLS12_381_Fr_G1& root)
     {
@@ -73,15 +75,16 @@ public:
     NTTParameters(const bool _inverse, int id)
         : gpu(select_gpu(id)), inverse(_inverse)
     {
-        const BLS12_381_Fr_G1* roots = inverse ? inverse_roots_of_unity
-                                    : forward_roots_of_unity;
+        const BLS12_381_Fr_G1* roots = inverse ? (const BLS12_381_Fr_G1*)inverse_roots_of_unity
+                                    : (const BLS12_381_Fr_G1*)forward_roots_of_unity;
 
         const size_t blob_sz = 64 + 128 + 256 + 512 + 32;
-
+        
         CUDA_OK(cudaGetSymbolAddress((void**)&radix6_twiddles,
                                      inverse ? inverse_radix6_twiddles
                                              : forward_radix6_twiddles));
         radix7_twiddles = (BLS12_381_Fr_G1*)gpu.Dmalloc(blob_sz * sizeof(BLS12_381_Fr_G1));
+
         radix8_twiddles = radix7_twiddles + 64;
         radix9_twiddles = radix8_twiddles + 128;
         radix10_twiddles = radix9_twiddles + 256;
@@ -109,6 +112,12 @@ public:
         partial_twiddles = reinterpret_cast<decltype(partial_twiddles)>
                            (gpu.Dmalloc(2 * partial_sz * sizeof(BLS12_381_Fr_G1)));
         partial_group_gen_powers = &partial_twiddles[WINDOW_NUM];
+
+        const size_t inverse_sz = S + 1;
+        Domain_size_inverse = (uint32_t*)gpu.Dmalloc(inverse_sz * sizeof(BLS12_381_Fr_G1));
+        CUDA_OK(cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
+                                inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
+                                gpu));
 
         std::cout << "window number: " << WINDOW_NUM << std::endl;
         std::cout << "window size: " << WINDOW_SIZE << std::endl;

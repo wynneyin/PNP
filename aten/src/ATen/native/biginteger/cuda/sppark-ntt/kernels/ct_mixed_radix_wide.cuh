@@ -15,7 +15,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
              const BLS12_381_Fr_G1* d_radix6_twiddles, const BLS12_381_Fr_G1* d_radixX_twiddles,
              const BLS12_381_Fr_G1* d_intermediate_twiddles,
              const unsigned int intermediate_twiddle_shift,
-             const bool is_intt, const BLS12_381_Fr_G1* d_domain_size_inverse)
+             const bool is_intt, const uint32_t* d_domain_size_inverse)
 {
 #if (__CUDACC_VER_MAJOR__-0) >= 11
     __builtin_assume(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -150,9 +150,10 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = r0 + t;
     }
     
+
     if (is_intt && (stage + iterations) == lg_domain_size) {
-        r0 *= *d_domain_size_inverse;
-        r1 *= *d_domain_size_inverse;
+        r0 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
+        r1 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
     }
 
     // if (tid == 0) {
@@ -183,7 +184,7 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 #define NTT_ARGUMENTS \
         unsigned int, unsigned int, unsigned int, unsigned int, BLS12_381_Fr_G1*, \
         const BLS12_381_Fr_G1 (*)[WINDOW_SIZE], const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, \
-        unsigned int, bool, const BLS12_381_Fr_G1*
+        unsigned int, bool, const uint32_t*
 
 template __global__ void _CT_NTT<0>(NTT_ARGUMENTS);
 template __global__ void _CT_NTT<1>(NTT_ARGUMENTS);
@@ -222,15 +223,16 @@ public:
         block_size = (num_threads <= block_size) ? num_threads : block_size;
         num_blocks = (num_threads + block_size - 1) / block_size;
 
-        std::cout << "my log size is " << lg_domain_size << std::endl;
-        std::cout << "my num_blocks is " << num_blocks << std::endl;
-        std::cout << "my block_size is " << block_size << std::endl;
+        // std::cout << "my log size is " << lg_domain_size << std::endl;
+        // std::cout << "my num_blocks is " << num_blocks << std::endl;
+        // std::cout << "my block_size is " << block_size << std::endl;
 
 
         assert(num_blocks == (unsigned int)num_blocks);
 
         BLS12_381_Fr_G1* d_radixX_twiddles = nullptr;
         BLS12_381_Fr_G1* d_intermediate_twiddles = nullptr;
+        
         unsigned int intermediate_twiddle_shift = 0;
 
         #define NTT_CONFIGURATION \
@@ -240,7 +242,7 @@ public:
                 d_inout, ntt_parameters.partial_twiddles, \
                 ntt_parameters.radix6_twiddles, d_radixX_twiddles, \
                 d_intermediate_twiddles, intermediate_twiddle_shift, \
-                is_intt, &domain_size_inverse[lg_domain_size]
+                is_intt, ntt_parameters.Domain_size_inverse+lg_domain_size*8
 
         switch (radix) {
         case 6:
@@ -340,8 +342,8 @@ void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, bool intt,
 {
     CT_launcher params{d_inout, lg_domain_size, intt, ntt_parameters, stream};
 
-    std::cout << "WINDOW_SIZE: " << WINDOW_SIZE << std::endl;
-    std::cout << "WINDOW_NUM: " << WINDOW_NUM << std::endl;
+    // std::cout << "WINDOW_SIZE: " << WINDOW_SIZE << std::endl;
+    // std::cout << "WINDOW_NUM: " << WINDOW_NUM << std::endl;
 
     if (lg_domain_size <= 10) {
         params.step(lg_domain_size);

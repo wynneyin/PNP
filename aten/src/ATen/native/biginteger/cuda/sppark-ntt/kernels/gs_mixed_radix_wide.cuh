@@ -15,7 +15,7 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
              const BLS12_381_Fr_G1* d_radix6_twiddles, const BLS12_381_Fr_G1* d_radixX_twiddles,
              const BLS12_381_Fr_G1* d_intermediate_twiddles,
              const unsigned int intermediate_twiddle_shift,
-             const bool is_intt, const BLS12_381_Fr_G1* d_domain_size_inverse)
+             const bool is_intt, const uint32_t* d_domain_size_inverse)
 {
 #if (__CUDACC_VER_MAJOR__-0) >= 11
     __builtin_assume(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -119,9 +119,9 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r1 *= t1;
     }
 
-    if (is_intt && stage == iterations) {
-        r0 *= *d_domain_size_inverse;
-        r1 *= *d_domain_size_inverse;
+    if (is_intt && (stage + iterations) == lg_domain_size) {
+        r0 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
+        r1 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
     }
 
     // rotate "iterations" bits in indices
@@ -140,7 +140,7 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 #define NTT_ARGUMENTS \
         unsigned int, unsigned int, unsigned int, unsigned int, BLS12_381_Fr_G1*, \
         const BLS12_381_Fr_G1 (*)[WINDOW_SIZE], const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, \
-        unsigned int, bool, const BLS12_381_Fr_G1*
+        unsigned int, bool, const uint32_t*
 
 template __global__ void _GS_NTT<0>(NTT_ARGUMENTS);
 template __global__ void _GS_NTT<1>(NTT_ARGUMENTS);
@@ -192,7 +192,7 @@ public:
             ntt_parameters.partial_twiddles, ntt_parameters.radix6_twiddles, \
             d_radixX_twiddles, d_intermediate_twiddles, \
             intermediate_twiddle_shift, \
-            is_intt, &domain_size_inverse[lg_domain_size]
+            is_intt, ntt_parameters.Domain_size_inverse+lg_domain_size*8
 
         switch (radix) {
         case 6:

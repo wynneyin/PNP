@@ -1,9 +1,4 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
-#ifndef __SPPARK_UTIL_THREAD_POOL_T_HPP__
-#define __SPPARK_UTIL_THREAD_POOL_T_HPP__
+#pragma once
 
 #if __cplusplus < 201103L && !(defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
 # error C++11 or later is required.
@@ -274,4 +269,3 @@ public:
     T operator--(int) const { return ptr->val.fetch_sub(1, std::memory_order_relaxed); }
     T operator--() const    { return ptr->val-- - 1; }
 };
-#endif  // __THREAD_POOL_T_HPP__

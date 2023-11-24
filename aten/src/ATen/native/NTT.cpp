@@ -8,6 +8,7 @@
 #include <ATen/OpMathType.h>
 #include <ATen/Parallel.h>
 #include <ATen/ScalarOps.h>
+#include <ATen/ops/copy.h>
 #if defined(C10_MOBILE) && defined(USE_XNNPACK)
 #include <ATen/native/xnnpack/Engine.h>
 #endif
@@ -87,40 +88,98 @@
 #include <math.h>
 namespace at {
 namespace native {
-Tensor ntt_zkp_cpu(const Tensor& input);
-Tensor intt_zkp_cpu(const Tensor& input);
-Tensor coset_ntt_zkp_cpu(const Tensor& input);
-Tensor coset_intt_zkp_cpu(const Tensor& input);
 
-Tensor ntt_zkp_cpu(const Tensor& input) {
+static void ntt_zkp_cpu_template(Tensor& input) {
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
     NTT(ptr, true, out_sizes);
-    return input;
 }
 
-Tensor intt_zkp_cpu(const Tensor& input) {
-    std::cout<<"call intt on cpu"<<std::endl;
+static void intt_zkp_cpu_template(Tensor& input) {
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
     iNTT(ptr, false, out_sizes);
-
-    return input;
 }
 
-Tensor coset_ntt_zkp_cpu(const Tensor& input) {
+static void ntt_coset_zkp_cpu_template(Tensor& input) {
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
     NTT_coset(ptr, true, out_sizes);
-    return input;
 }
 
-Tensor coset_intt_zkp_cpu(const Tensor& input) {
+static void intt_coset_zkp_cpu_template(Tensor& input) {
     auto out_sizes = input.numel();
     auto ptr = input.mutable_data_ptr<uint64_t>();
     iNTT_coset(ptr, false, out_sizes);
+}
 
-    return input;
+Tensor ntt_zkp_cpu(const Tensor& inout) {
+  Tensor output = inout.clone();
+  ntt_zkp_cpu_template(output);
+  return output;
+  return inout;
+}
+
+Tensor& ntt_zkp_cpu_(Tensor& inout) {
+  ntt_zkp_cpu_template(inout);
+  return inout;
+}
+
+Tensor& ntt_zkp_out_cpu(const Tensor& inout, Tensor& output) {
+  copy(output, inout);
+  ntt_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor intt_zkp_cpu(const Tensor& inout) {
+  Tensor output = inout.clone();
+  intt_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor& intt_zkp_cpu_(Tensor& inout) {
+  intt_zkp_cpu_template(inout);
+  return inout;
+}
+
+Tensor& intt_zkp_out_cpu(const Tensor& inout, Tensor& output) {
+  copy(output, inout);
+  intt_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor ntt_coset_zkp_cpu(const Tensor& inout) {
+  Tensor output = inout.clone();
+  ntt_coset_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor& ntt_coset_zkp_cpu_(Tensor& inout) {
+  ntt_coset_zkp_cpu_template(inout);
+  return inout;
+}
+
+Tensor& ntt_coset_zkp_out_cpu(const Tensor& inout, Tensor& output) {
+  copy(output, inout);
+  ntt_coset_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor intt_coset_zkp_cpu(const Tensor& inout) {
+  Tensor output = inout.clone();
+  intt_coset_zkp_cpu_template(output);
+  return output;
+}
+
+Tensor& intt_coset_zkp_cpu_(Tensor& inout) {
+  intt_coset_zkp_cpu_template(inout);
+  return inout;
+}
+
+Tensor& intt_coset_zkp_out_cpu(const Tensor& inout, Tensor& output) {
+  copy(output, inout);
+  intt_coset_zkp_cpu_template(output);
+  return output;
 }
 
 }}  // namespace at::native

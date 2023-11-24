@@ -1,9 +1,4 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
-#ifndef __SPPARK_UTIL_SLICE_T_HPP__
-#define __SPPARK_UTIL_SLICE_T_HPP__
+#pragma once
 
 #include <vector>
 
@@ -42,4 +37,3 @@ public:
 # endif
 #endif
 
-#endif

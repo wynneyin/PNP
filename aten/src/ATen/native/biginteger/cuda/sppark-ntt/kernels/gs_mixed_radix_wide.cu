@@ -1,8 +1,5 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-#pragma once
-#include <ATen/native/biginteger/cuda/ff/bls12-381.hpp>
+#include "algorithm.cuh"
+#include "kernels.cuh"
 
 namespace at { 
 namespace native {

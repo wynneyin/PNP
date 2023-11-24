@@ -1,32 +1,8 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
 #pragma once
-#ifndef MAX_LG_DOMAIN_SIZE
-# if defined(FEATURE_BN254)
-#  define MAX_LG_DOMAIN_SIZE 28
-# else
-#  define MAX_LG_DOMAIN_SIZE 28 // tested only up to 2^31 for now
-# endif
-#endif
-
-#if MAX_LG_DOMAIN_SIZE <= 32
-typedef unsigned int index_t;
-#else
-typedef size_t index_t;
-#endif
-
-#if MAX_LG_DOMAIN_SIZE <= 28
-# define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 1) / 2)
-#else
-# define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 2) / 3)
-#endif
-#define WINDOW_SIZE (1 << LG_WINDOW_SIZE)
-#define WINDOW_NUM ((MAX_LG_DOMAIN_SIZE + LG_WINDOW_SIZE - 1) / LG_WINDOW_SIZE)
-
-#include "ATen/native/biginteger/cuda/sppark-ntt/parameters/bls12_381.h"
-#include "ATen/native/biginteger/cuda/sppark-ntt/gen_twiddles.cuh"
+#include "ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh"
+#include "ATen/native/biginteger/cuda/sppark-util/exception.cuh"
+#include "parameters/bls12_381.h"
+#include "gen_twiddles.cuh"
 
 
 // Maximum domain size supported. Can be adjusted at will, but with the
@@ -119,8 +95,8 @@ public:
                                 inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
                                 gpu));
 
-        std::cout << "window number: " << WINDOW_NUM << std::endl;
-        std::cout << "window size: " << WINDOW_SIZE << std::endl;
+        // std::cout << "window number: " << WINDOW_NUM << std::endl;
+        // std::cout << "window size: " << WINDOW_SIZE << std::endl;
 
         generate_partial_twiddles<<<WINDOW_SIZE/32, 32, 0, gpu>>>
             (partial_twiddles, roots[MAX_LG_DOMAIN_SIZE]);

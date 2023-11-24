@@ -1,10 +1,4 @@
-// Copyright Supranational LLC
-// Licensed under the Apache License, Version 2.0, see LICENSE for details.
-// SPDX-License-Identifier: Apache-2.0
-
-#ifndef __SPPARK_UTIL_VEC2D_T_HPP__
-#define __SPPARK_UTIL_VEC2D_T_HPP__
-
+#pragma once
 #include <cstdint>
 
 #ifndef __CUDACC__
@@ -53,4 +47,3 @@ public:
 # undef __host__
 #endif
 
-#endif

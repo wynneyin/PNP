@@ -6,16 +6,11 @@ namespace native {
 
 #define ONE BLS12_381_Fr_G1::one()
 
-# define MAX_LG_DOMAIN_SIZE 28 // tested only up to 2^31 for now
-
-#if MAX_LG_DOMAIN_SIZE <= 32
-typedef unsigned int index_t;
-#else
-typedef size_t index_t;
-#endif
+#define MAX_LG_DOMAIN_SIZE 28 // tested only up to 2^31 for now
+typedef unsigned int index_t; //for MAX_LG_DOMAIN_SIZE <= 32, otherwise use size_t
 
 #if MAX_LG_DOMAIN_SIZE <= 28
-# define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 1) / 2)
+# define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 1) / 2) 
 #else
 # define LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 2) / 3)
 #endif

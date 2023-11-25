@@ -39,16 +39,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     BLS12_381_Fr_G1 r0 = d_inout[idx0];
     BLS12_381_Fr_G1 r1 = d_inout[idx1];
 
-    // if (tid == 0) {
-    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
-    // if (tid == 1) {
-    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
-    // if (tid == gridDim.x*blockDim.x - 1) {
-    //     printf("my tid is %u, when in idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
-
     if (intermediate_mul == 1) {
         unsigned int diff_mask = (1 << (iterations - 1)) - 1;
         unsigned int thread_ntt_idx = (tid & diff_mask) * 2;
@@ -97,12 +87,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
-        // if (pos)
-        //     swap(idx0, idx1);
-        // shfl_bfly(idx0, laneMask);
-        // if (pos)
-        //     swap(idx0, idx1);
-
         BLS12_381_Fr_G1 t = d_radix6_twiddles[rank << (6 - (s + 1))];
         t *= r1;
 
@@ -120,7 +104,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 
         // shfl_bfly through the shared memory
         extern __shared__ BLS12_381_Fr_G1 shared_exchange[];
-        // extern __shared__ index_t shared_exchange_idx[];
 
 #ifdef __CUDA_ARCH__
         BLS12_381_Fr_G1 x = BLS12_381_Fr_G1::csel(r1, r0, pos);
@@ -131,15 +114,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = BLS12_381_Fr_G1::csel(x, r0, !pos);
         r1 = BLS12_381_Fr_G1::csel(x, r1, pos);
 #endif
-        // if (pos)
-        //     swap(idx0, idx1);
-        // __syncthreads();
-        // shared_exchange_idx[threadIdx.x] = idx0;
-        // __syncthreads();
-        // idx0 = shared_exchange_idx[threadIdx.x ^ laneMask];
-        // if (pos)
-        //     swap(idx0, idx1);
-
         t *= r1;
 
         r1 = r0 - t;
@@ -151,18 +125,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
         r1 *= *(reinterpret_cast<const BLS12_381_Fr_G1*>(d_domain_size_inverse));
     }
-
-    // if (tid == 0) {
-    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
-
-    // if (tid == 1) {
-    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
-
-    // if (tid == gridDim.x*blockDim.x - 1) {
-    //     printf("my tid is %u, when out idx0 is %u, idx1 is %u \n", tid, idx0, idx1);
-    // }
 
     // rotate "iterations" bits in indices
     index_t mask = ((index_t)1 << (stage + iterations)) - ((index_t)1 << stage);
@@ -190,175 +152,166 @@ template __global__ void _CT_NTT<2>(NTT_ARGUMENTS);
 
 //#ifndef __CUDA_ARCH__
 
-class CT_launcher {
-    BLS12_381_Fr_G1* d_inout;
-    const int lg_domain_size;
-    bool is_intt;
-    int stage;
-    const NTTParameters& ntt_parameters;
-    const cudaStream_t& stream;
+// class CT_launcher {
+//     BLS12_381_Fr_G1* d_inout;
+//     const int lg_domain_size;
+//     bool is_intt;
+//     int stage;
+//     const NTTParameters& ntt_parameters;
+//     const cudaStream_t& stream;
 
-public:
-    CT_launcher(BLS12_381_Fr_G1* d_ptr, int lg_dsz, bool intt,
-                const NTTParameters& params, const cudaStream_t& s)
-      : d_inout(d_ptr), lg_domain_size(lg_dsz), is_intt(intt), stage(0),
-        ntt_parameters(params), stream(s)
-    {}
+// public:
+//     CT_launcher(BLS12_381_Fr_G1* d_ptr, int lg_dsz, bool intt,
+//                 const NTTParameters& params, const cudaStream_t& s)
+//       : d_inout(d_ptr), lg_domain_size(lg_dsz), is_intt(intt), stage(0),
+//         ntt_parameters(params), stream(s)
+//     {}
 
-    void step(int iterations)
-    {
-        assert(iterations <= 10);
-
-        const int radix = iterations < 6 ? 6 : iterations;
-
-
-        index_t num_threads = (index_t)1 << (lg_domain_size - 1);
-        index_t block_size = 1 << (radix - 1);
-        index_t num_blocks;
-
-        block_size = (num_threads <= block_size) ? num_threads : block_size;
-        num_blocks = (num_threads + block_size - 1) / block_size;
-
-        // std::cout << "my log size is " << lg_domain_size << std::endl;
-        // std::cout << "my num_blocks is " << num_blocks << std::endl;
-        // std::cout << "my block_size is " << block_size << std::endl;
+void CTkernel(int iterations, BLS12_381_Fr_G1* d_inout, int lg_domain_size, bool is_intt,
+        const NTTParameters& ntt_parameters, const cudaStream_t& stream, int* stage)
+{
+    assert(iterations <= 10);
+    const int radix = iterations < 6 ? 6 : iterations;
 
 
-        assert(num_blocks == (unsigned int)num_blocks);
+    index_t num_threads = (index_t)1 << (lg_domain_size - 1);
+    index_t block_size = 1 << (radix - 1);
+    index_t num_blocks;
 
-        BLS12_381_Fr_G1* d_radixX_twiddles = nullptr;
-        BLS12_381_Fr_G1* d_intermediate_twiddles = nullptr;
-        
-        unsigned int intermediate_twiddle_shift = 0;
+    block_size = (num_threads <= block_size) ? num_threads : block_size;
+    num_blocks = (num_threads + block_size - 1) / block_size;
 
-        #define NTT_CONFIGURATION \
-                num_blocks, block_size, sizeof(BLS12_381_Fr_G1) * block_size, stream
+    assert(num_blocks == (unsigned int)num_blocks);
 
-        #define NTT_ARGUMENTS radix, lg_domain_size, stage, iterations, \
-                d_inout, ntt_parameters.partial_twiddles, \
-                ntt_parameters.radix6_twiddles, d_radixX_twiddles, \
-                d_intermediate_twiddles, intermediate_twiddle_shift, \
-                is_intt, ntt_parameters.Domain_size_inverse+lg_domain_size*8
+    BLS12_381_Fr_G1* d_radixX_twiddles = nullptr;
+    BLS12_381_Fr_G1* d_intermediate_twiddles = nullptr;
+    
+    unsigned int intermediate_twiddle_shift = 0;
 
-        switch (radix) {
+    #define NTT_CONFIGURATION \
+            num_blocks, block_size, sizeof(BLS12_381_Fr_G1) * block_size, stream
+
+    #define NTT_ARGUMENTS radix, lg_domain_size, *stage, iterations, \
+            d_inout, ntt_parameters.partial_twiddles, \
+            ntt_parameters.radix6_twiddles, d_radixX_twiddles, \
+            d_intermediate_twiddles, intermediate_twiddle_shift, \
+            is_intt, ntt_parameters.Domain_size_inverse+lg_domain_size*8
+
+    switch (radix) {
+    case 6:
+        switch (*stage) {
+        case 0:
+            _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
         case 6:
-            switch (stage) {
-            case 0:
-                _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            case 6:
-                intermediate_twiddle_shift = std::max(12 - lg_domain_size, 0);
-                d_intermediate_twiddles = ntt_parameters.radix6_twiddles_6;
-                _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            case 12:
-                intermediate_twiddle_shift = std::max(18 - lg_domain_size, 0);
-                d_intermediate_twiddles = ntt_parameters.radix6_twiddles_12;
-                _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            default:
-                _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            }
+            intermediate_twiddle_shift = std::max(12 - lg_domain_size, 0);
+            d_intermediate_twiddles = ntt_parameters.radix6_twiddles_6;
+            _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
             break;
-        case 7:
-            d_radixX_twiddles = ntt_parameters.radix7_twiddles;
-            switch (stage) {
-            case 0:
-                _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            case 7:
-                intermediate_twiddle_shift = std::max(14 - lg_domain_size, 0);
-                d_intermediate_twiddles = ntt_parameters.radix7_twiddles_7;
-                _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            default:
-                _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            }
-            break;
-        case 8:
-            d_radixX_twiddles = ntt_parameters.radix8_twiddles;
-            switch (stage) {
-            case 0:
-                _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            case 8:
-                intermediate_twiddle_shift = std::max(16 - lg_domain_size, 0);
-                d_intermediate_twiddles = ntt_parameters.radix8_twiddles_8;
-                _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            default:
-                _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            }
-            break;
-        case 9:
-            d_radixX_twiddles = ntt_parameters.radix9_twiddles;
-            switch (stage) {
-            case 0:
-                _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            case 9:
-                intermediate_twiddle_shift = std::max(18 - lg_domain_size, 0);
-                d_intermediate_twiddles = ntt_parameters.radix9_twiddles_9;
-                _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            default:
-                _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            }
-            break;
-        case 10:
-            d_radixX_twiddles = ntt_parameters.radix10_twiddles;
-            switch (stage) {
-            case 0:
-                _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            default:
-                _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
-                break;
-            }
+        case 12:
+            intermediate_twiddle_shift = std::max(18 - lg_domain_size, 0);
+            d_intermediate_twiddles = ntt_parameters.radix6_twiddles_12;
+            _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
             break;
         default:
-            assert(false);
+            _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
         }
-
-        #undef NTT_CONFIGURATION
-        #undef NTT_ARGUMENTS
-
-        CUDA_OK(cudaGetLastError());
-
-        stage += radix;
+        break;
+    case 7:
+        d_radixX_twiddles = ntt_parameters.radix7_twiddles;
+        switch (*stage) {
+        case 0:
+            _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        case 7:
+            intermediate_twiddle_shift = std::max(14 - lg_domain_size, 0);
+            d_intermediate_twiddles = ntt_parameters.radix7_twiddles_7;
+            _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        default:
+            _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        }
+        break;
+    case 8:
+        d_radixX_twiddles = ntt_parameters.radix8_twiddles;
+        switch (*stage) {
+        case 0:
+            _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        case 8:
+            intermediate_twiddle_shift = std::max(16 - lg_domain_size, 0);
+            d_intermediate_twiddles = ntt_parameters.radix8_twiddles_8;
+            _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        default:
+            _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        }
+        break;
+    case 9:
+        d_radixX_twiddles = ntt_parameters.radix9_twiddles;
+        switch (*stage) {
+        case 0:
+            _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        case 9:
+            intermediate_twiddle_shift = std::max(18 - lg_domain_size, 0);
+            d_intermediate_twiddles = ntt_parameters.radix9_twiddles_9;
+            _CT_NTT<2><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        default:
+            _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        }
+        break;
+    case 10:
+        d_radixX_twiddles = ntt_parameters.radix10_twiddles;
+        switch (*stage) {
+        case 0:
+            _CT_NTT<0><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        default:
+            _CT_NTT<1><<<NTT_CONFIGURATION>>>(NTT_ARGUMENTS);
+            break;
+        }
+        break;
+    default:
+        assert(false);
     }
-};
 
-void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, bool intt,
+    #undef NTT_CONFIGURATION
+    #undef NTT_ARGUMENTS
+
+    CUDA_OK(cudaGetLastError());
+
+    *stage += radix;
+}
+
+void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_intt,
             const NTTParameters& ntt_parameters, const cudaStream_t& stream)
 {
-    CT_launcher params{d_inout, lg_domain_size, intt, ntt_parameters, stream};
-
-    // std::cout << "WINDOW_SIZE: " << WINDOW_SIZE << std::endl;
-    // std::cout << "WINDOW_NUM: " << WINDOW_NUM << std::endl;
-
+    //CT_launcher params{d_inout, lg_domain_size, intt, ntt_parameters, stream};
+    int stage = 0;
     if (lg_domain_size <= 10) {
-        params.step(lg_domain_size);
+        CTkernel(lg_domain_size, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
     } else if (lg_domain_size <= 17) {
-        params.step(lg_domain_size / 2 + lg_domain_size % 2);
-        params.step(lg_domain_size / 2);
+        CTkernel(lg_domain_size / 2 + lg_domain_size % 2, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(lg_domain_size / 2, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
     } else if (lg_domain_size <= 30) {
         int step = lg_domain_size / 3;
         int rem = lg_domain_size % 3;
-        params.step(step);
-        params.step(step + (lg_domain_size == 29 ? 1 : 0));
-        params.step(step + (lg_domain_size == 29 ? 1 : rem));
+        CTkernel(step, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(step + (lg_domain_size == 29 ? 1 : 0), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(step + (lg_domain_size == 29 ? 1 : rem), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
     } else if (lg_domain_size <= 40) {
         int step = lg_domain_size / 4;
         int rem = lg_domain_size % 4;
-        params.step(step);
-        params.step(step + (rem > 2));
-        params.step(step + (rem > 1));
-        params.step(step + (rem > 0));
+        CTkernel(step, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(step + (rem > 2), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(step + (rem > 1), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
+        CTkernel(step + (rem > 0), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
     } else {
         assert(false);
     }

@@ -6,7 +6,7 @@
 namespace at { 
 namespace native {
 
-void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, bool intt,
+void CT_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_intt,
             const NTTParameters& ntt_parameters, const cudaStream_t& stream);
 
 void GS_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_intt,

@@ -6,13 +6,7 @@ namespace native {
 
 #define ONE BLS12_381_Fr_G1::one()
 
-#ifndef MAX_LG_DOMAIN_SIZE
-# if defined(FEATURE_BN254)
-#  define MAX_LG_DOMAIN_SIZE 28
-# else
-#  define MAX_LG_DOMAIN_SIZE 28 // tested only up to 2^31 for now
-# endif
-#endif
+# define MAX_LG_DOMAIN_SIZE 28 // tested only up to 2^31 for now
 
 #if MAX_LG_DOMAIN_SIZE <= 32
 typedef unsigned int index_t;

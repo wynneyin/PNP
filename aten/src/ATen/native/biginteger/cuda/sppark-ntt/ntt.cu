@@ -4,7 +4,7 @@
 namespace at { 
 namespace native {
     
-void NTT::bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
+void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
 {
     assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -31,7 +31,7 @@ void NTT::bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
     CUDA_OK(cudaGetLastError());
 }
 
-void NTT::LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
+void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
                         uint32_t lg_domain_size, uint32_t lg_blowup,
                         stream_t& stream, bool ext_pow)
 {
@@ -52,7 +52,7 @@ void NTT::LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
     CUDA_OK(cudaGetLastError());
 }
 
-void NTT::NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
+void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
                             InputOutputOrder order, Direction direction,
                             Type type, stream_t& stream,
                             bool coset_ext_pow)
@@ -109,7 +109,7 @@ void NTT::NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
         bit_rev(d_inout, d_inout, lg_domain_size, stream);
 }
 
-RustError NTT::Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+RustError Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                         InputOutputOrder order, Direction direction,
                         Type type, bool coset_ext_pow)
 {
@@ -154,13 +154,13 @@ RustError NTT::Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain
 }
 
 RustError compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
-                      NTT::InputOutputOrder ntt_order,
-                      NTT::Direction ntt_direction,
-                      NTT::Type ntt_type)
+                      InputOutputOrder ntt_order,
+                      Direction ntt_direction,
+                      Type ntt_type)
 {
     auto& gpu = select_gpu(device_id);
 
-    return NTT::Base(gpu, inout, lg_domain_size,
+    return Base(gpu, inout, lg_domain_size,
                      ntt_order, ntt_direction, ntt_type);
 }
 

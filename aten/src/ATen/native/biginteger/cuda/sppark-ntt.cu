@@ -28,9 +28,9 @@ static void ntt_zkp(Tensor& inout) {
         0,
         self_ptr,
         lg_domain_size,  
-        NTT::InputOutputOrder::NN,
-        NTT::Direction::forward,
-        NTT::Type::standard
+        InputOutputOrder::NN,
+        Direction::forward,
+        Type::standard
     );
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     });
@@ -45,9 +45,9 @@ static void intt_zkp(Tensor& inout) {
         0,
         self_ptr,
         lg_domain_size,
-        NTT::InputOutputOrder::NN,
-        NTT::Direction::inverse,
-        NTT::Type::standard
+        InputOutputOrder::NN,
+        Direction::inverse,
+        Type::standard
     );
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     });
@@ -62,9 +62,9 @@ static void ntt_coset_zkp(Tensor& inout) {
         0,
         self_ptr,
         lg_domain_size,
-        NTT::InputOutputOrder::NN,
-        NTT::Direction::forward,
-        NTT::Type::coset
+        InputOutputOrder::NN,
+        Direction::forward,
+        Type::coset
     );
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     });
@@ -79,9 +79,9 @@ static void intt_coset_zkp(Tensor& inout) {
         0,
         self_ptr,
         lg_domain_size,
-        NTT::InputOutputOrder::NN,
-        NTT::Direction::inverse,
-        NTT::Type::coset
+        InputOutputOrder::NN,
+        Direction::inverse,
+        Type::coset
     );
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     });

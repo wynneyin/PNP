@@ -1,6 +1,7 @@
 #pragma once
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/native/cuda/thread_constants.h>
 #include "ATen/native/biginteger/cuda/ff/bls12-381.hpp"
-#include "ATen/native/biginteger/cuda/sppark-util/exception.cuh"
 #include "ATen/native/biginteger/cuda/sppark-ntt/parameters.cuh"
 #include "ATen/native/biginteger/cuda/sppark-ntt/kernels.cuh"
 namespace at { 

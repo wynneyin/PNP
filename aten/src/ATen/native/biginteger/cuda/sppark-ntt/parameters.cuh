@@ -1,6 +1,7 @@
 #pragma once
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/native/cuda/thread_constants.h>
 #include "ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh"
-#include "ATen/native/biginteger/cuda/sppark-util/exception.cuh"
 #include "parameters/bls12_381.h"
 #include "gen_twiddles.cuh"
 
@@ -14,10 +15,6 @@ namespace native {
 
 __device__ __constant__ BLS12_381_Fr_G1 forward_radix6_twiddles[32];
 __device__ __constant__ BLS12_381_Fr_G1 inverse_radix6_twiddles[32];
-
-
-//#ifndef __CUDA_ARCH__
-
 
 
 class NTTParameters {
@@ -43,7 +40,8 @@ private:
     {
         BLS12_381_Fr_G1* ret = (BLS12_381_Fr_G1*)gpu.Dmalloc(num_blocks * block_size * sizeof(BLS12_381_Fr_G1));
         generate_radixX_twiddles_X<<<16, block_size, 0, gpu>>>(ret, num_blocks, root);
-        CUDA_OK(cudaGetLastError());
+        //CUDA_OK(cudaGetLastError());
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
         return ret;
     }
 
@@ -56,9 +54,14 @@ public:
 
         const size_t blob_sz = 64 + 128 + 256 + 512 + 32;
         
-        CUDA_OK(cudaGetSymbolAddress((void**)&radix6_twiddles,
+        // CUDA_OK(cudaGetSymbolAddress((void**)&radix6_twiddles,
+        //                              inverse ? inverse_radix6_twiddles
+        //                                      : forward_radix6_twiddles));
+        cudaGetSymbolAddress((void**)&radix6_twiddles,
                                      inverse ? inverse_radix6_twiddles
-                                             : forward_radix6_twiddles));
+                                             : forward_radix6_twiddles);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+
         radix7_twiddles = (BLS12_381_Fr_G1*)gpu.Dmalloc(blob_sz * sizeof(BLS12_381_Fr_G1));
 
         radix8_twiddles = radix7_twiddles + 64;
@@ -71,11 +74,16 @@ public:
                                                           roots[8],
                                                           roots[9],
                                                           roots[10]);
-        CUDA_OK(cudaGetLastError());
+        // CUDA_OK(cudaGetLastError());
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
 
-        CUDA_OK(cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
+        // CUDA_OK(cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
+        //                         32 * sizeof(BLS12_381_Fr_G1), cudaMemcpyDeviceToDevice,
+        //                         gpu));
+        cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
                                 32 * sizeof(BLS12_381_Fr_G1), cudaMemcpyDeviceToDevice,
-                                gpu));
+                                gpu);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
 
         radix6_twiddles_6 = twiddles_X(64, 64, roots[12]);
         radix6_twiddles_12 = twiddles_X(4096, 64, roots[18]);
@@ -91,21 +99,24 @@ public:
 
         const size_t inverse_sz = S + 1;
         Domain_size_inverse = (uint32_t*)gpu.Dmalloc(inverse_sz * sizeof(BLS12_381_Fr_G1));
-        CUDA_OK(cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
+        // CUDA_OK(cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
+        //                         inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
+        //                         gpu));
+        cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
                                 inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
-                                gpu));
-
-        // std::cout << "window number: " << WINDOW_NUM << std::endl;
-        // std::cout << "window size: " << WINDOW_SIZE << std::endl;
+                                gpu);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
 
         generate_partial_twiddles<<<WINDOW_SIZE/32, 32, 0, gpu>>>
             (partial_twiddles, roots[MAX_LG_DOMAIN_SIZE]);
-        CUDA_OK(cudaGetLastError());
+        //CUDA_OK(cudaGetLastError());
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
 
         generate_partial_twiddles<<<WINDOW_SIZE/32, 32, 0, gpu>>>
             (partial_group_gen_powers, inverse ? group_gen_inverse
                                                : group_gen);
-        CUDA_OK(cudaGetLastError());
+        //CUDA_OK(cudaGetLastError());
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
     }
     NTTParameters(const NTTParameters&) = delete;
 
@@ -159,6 +170,5 @@ public:
     }
 };
 
-//#endif
 }
 }

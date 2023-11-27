@@ -34,7 +34,9 @@ const gpu_t& select_gpu(int id)
     auto& gpus = gpus_t::all();
     if (id == -1) {
         int cuda_id;
-        CUDA_OK(cudaGetDevice(&cuda_id));
+        //CUDA_OK(cudaGetDevice(&cuda_id));
+        cudaGetDevice(&cuda_id);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
         for (auto* gpu: gpus)
            if (gpu->cid() == cuda_id) return *gpu;
         id = 0;
@@ -56,5 +58,5 @@ const std::vector<const gpu_t*>& all_gpus()
 extern "C" bool cuda_available()
 {   return gpus_t::all().size() != 0;   }
 
-}
-}
+}//namespace native
+}//namespace at

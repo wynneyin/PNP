@@ -2,9 +2,8 @@
 
 #include <cassert>
 #include <iostream>
-
-#include "ATen/native/biginteger/cuda/sppark-util/exception.cuh"
-#include "ATen/native/biginteger/cuda/sppark-util/rusterror.h"
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/native/cuda/thread_constants.h>
 #include "ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh"
 #include "ATen/native/biginteger/cuda/ff/bls12-381.hpp"
 #include "kernels/algorithm.cuh"
@@ -34,12 +33,12 @@ static void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
                             bool coset_ext_pow = false);
 
 
-static RustError Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+static void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                         InputOutputOrder order, Direction direction,
                         Type type, bool coset_ext_pow = false);
 
 
-RustError compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                       InputOutputOrder ntt_order,
                       Direction ntt_direction,
                       Type ntt_type);

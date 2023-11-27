@@ -1,14 +1,13 @@
 #include "ATen/native/biginteger/cuda/sppark-ntt/ntt.cuh"
 
-// #ifndef __CUDA_ARCH__
 namespace at { 
 namespace native {
     
 void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
 {
-    assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
-
+    //assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
+    TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length check")
     size_t domain_size = (size_t)1 << lg_domain_size;
 
     if (domain_size <= WARP_SZ)
@@ -28,7 +27,8 @@ void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
             <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(BLS12_381_Fr_G1), stream>>>
             (d_out, d_inp, lg_domain_size);
 
-    CUDA_OK(cudaGetLastError());
+    //CUDA_OK(cudaGetLastError());
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
 void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
@@ -49,7 +49,8 @@ void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
         LDE_distribute_powers<<<domain_size / 512, 512, 0, stream>>>
                                 (inout, lg_blowup, bitrev, gen_powers, ext_pow);
 
-    CUDA_OK(cudaGetLastError());
+    //CUDA_OK(cudaGetLastError());
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
 void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
@@ -109,61 +110,62 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
         bit_rev(d_inout, d_inout, lg_domain_size, stream);
 }
 
-RustError Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                         InputOutputOrder order, Direction direction,
                         Type type, bool coset_ext_pow)
 {
-    if (lg_domain_size == 0)
-        return RustError{cudaSuccess};
+    TORCH_CHECK(lg_domain_size != 0, "NTT Length check!");
+    // if (lg_domain_size == 0)
+    //     return RustError{cudaSuccess};
 
-    try {
+    //try {
 
-        gpu.select();
+    gpu.select();
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
+    size_t domain_size = (size_t)1 << lg_domain_size;
 
-        size_t domain_size = (size_t)1 << lg_domain_size;
+    // cudaEvent_t start, stop;
+    // cudaEventCreate(&start);
+    // cudaEventCreate(&stop);
+    // cudaEventRecord(start, 0);
+    
+    NTT_internal(inout, lg_domain_size, order, direction, type, gpu,
+                coset_ext_pow);
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
+    gpu.sync();
 
-        // cudaEvent_t start, stop;
-        // cudaEventCreate(&start);
-        // cudaEventCreate(&stop);
-        // cudaEventRecord(start, 0);
-        
-        NTT_internal(inout, lg_domain_size, order, direction, type, gpu,
-                    coset_ext_pow);
+    // cudaEventRecord(stop, 0);
+    // cudaEventSynchronize(stop);
 
-        gpu.sync();
+    // float elapsed;
+    // cudaEventElapsedTime(&elapsed, start, stop);
 
-        // cudaEventRecord(stop, 0);
-        // cudaEventSynchronize(stop);
-
-        // float elapsed;
-        // cudaEventElapsedTime(&elapsed, start, stop);
-
-        // std::cout << "NTT_internal: " << elapsed << " ms" << std::endl;
+    // std::cout << "NTT_internal: " << elapsed << " ms" << std::endl;
 
 
-    } catch (const cuda_error& e) {
-        gpu.sync();
-#ifdef TAKE_RESPONSIBILITY_FOR_ERROR_MESSAGE
-        return RustError{e.code(), e.what()};
-#else
-        return RustError{e.code()};
-#endif
-    }
+    //} 
+//  catch (const cuda_error& e) {
+//         gpu.sync();
+// #ifdef TAKE_RESPONSIBILITY_FOR_ERROR_MESSAGE
+//         return RustError{e.code(), e.what()};
+// #else
+//         return RustError{e.code()};
+// #endif
+//     }
 
-    return RustError{cudaSuccess};
+//     return RustError{cudaSuccess};
 }
 
-RustError compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
+void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                       InputOutputOrder ntt_order,
                       Direction ntt_direction,
                       Type ntt_type)
 {
     auto& gpu = select_gpu(device_id);
 
-    return Base(gpu, inout, lg_domain_size,
+    Base(gpu, inout, lg_domain_size,
                      ntt_order, ntt_direction, ntt_type);
 }
-
 
 }//namespace native
 }//namespace at

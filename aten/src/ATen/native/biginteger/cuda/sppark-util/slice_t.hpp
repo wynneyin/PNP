@@ -28,8 +28,8 @@ public:
     inline size_t size() const                  { return nelems; }
     inline const T& operator[](size_t i) const  { return ptr[i]; }
 };
-}
-}
+}//namespace native
+}//namespace at
 #ifdef __CUDACC__
 # undef inline
 # ifdef slice_t_saved_inline

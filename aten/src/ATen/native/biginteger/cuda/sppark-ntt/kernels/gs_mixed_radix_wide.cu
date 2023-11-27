@@ -145,33 +145,11 @@ template __global__ void _GS_NTT<2>(NTT_ARGUMENTS);
 
 #undef NTT_ARGUMENTS
 
-// #ifndef __CUDA_ARCH__
-
-// void step(int iterations, BLS12_381_Fr_G1* d_ptr, int lg_dsz, bool innt,
-//           const NTTParameters& params, const cudaStream_t& s)
-// {
-
-    
-// }
-// class GS_launcher {
-//     BLS12_381_Fr_G1* d_inout;
-//     const int lg_domain_size;
-//     bool is_intt;
-//     int stage;
-//     const NTTParameters& ntt_parameters;
-//     const cudaStream_t& stream;
-
-// public:
-//     GS_launcher(BLS12_381_Fr_G1* d_ptr, int lg_dsz, bool innt,
-//                 const NTTParameters& params, const cudaStream_t& s)
-//       : d_inout(d_ptr), lg_domain_size(lg_dsz), is_intt(innt), stage(lg_dsz),
-//         ntt_parameters(params), stream(s)
-//     {}
-
 void GSkernel(int iterations, BLS12_381_Fr_G1* d_inout, int lg_domain_size, bool is_intt,
           const NTTParameters& ntt_parameters, const cudaStream_t& stream, int* stage)
 {
-    assert(iterations <= 10);
+    //assert(iterations <= 10);
+    TORCH_CHECK(iterations <= 10, "NTT iterations check!");
     const int radix = iterations < 6 ? 6 : iterations;
 
     index_t num_threads = (index_t)1 << (lg_domain_size - 1);
@@ -181,8 +159,9 @@ void GSkernel(int iterations, BLS12_381_Fr_G1* d_inout, int lg_domain_size, bool
     block_size = (num_threads <= block_size) ? num_threads : block_size;
     num_blocks = (num_threads + block_size - 1) / block_size;
 
-    assert(num_blocks == (unsigned int)num_blocks);
-
+    //assert(num_blocks == (unsigned int)num_blocks);
+    TORCH_CHECK(num_blocks == (unsigned int)num_blocks, "NTT blocks check!");
+    
     BLS12_381_Fr_G1* d_radixX_twiddles = nullptr;
     BLS12_381_Fr_G1* d_intermediate_twiddles = nullptr;
     int intermediate_twiddle_shift = 0;
@@ -280,20 +259,20 @@ void GSkernel(int iterations, BLS12_381_Fr_G1* d_inout, int lg_domain_size, bool
     default:
         assert(false);
     }
-
+    stage -= iterations;
     #undef NTT_CONFIGURATION
     #undef NTT_ARGUMENTS
 
-    CUDA_OK(cudaGetLastError());
-
-    stage -= iterations;
+    //CUDA_OK(cudaGetLastError());
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
 void GS_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_intt,
     const NTTParameters& ntt_parameters, const cudaStream_t& stream)
 {
-    // GS_launcher params{d_inout, lg_domain_size, is_intt, ntt_parameters, stream};
+    TORCH_CHECK(lg_domain_size <= 40, "NTT length check!");
     int stage = lg_domain_size;
+
     if (lg_domain_size <= 10) {
         GSkernel(lg_domain_size, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
     } else if (lg_domain_size <= 12) {
@@ -315,11 +294,8 @@ void GS_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_in
         GSkernel(step + (rem > 1), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
         GSkernel(step + (rem > 2), d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
         GSkernel(step, d_inout, lg_domain_size, is_intt, ntt_parameters, stream, &stage);
-    } else {
-        assert(false);
-    }
+    } 
 }
 
-// #endif
-}
-}
+}//namespace native
+}//namespace at

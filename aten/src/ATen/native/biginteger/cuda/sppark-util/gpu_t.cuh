@@ -1,5 +1,6 @@
 #pragma once
-
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/native/cuda/thread_constants.h>
 #ifndef __CUDACC__
 # include <cuda_runtime.h>
 #endif
@@ -64,22 +65,37 @@ public:
 
     inline void* Dmalloc(size_t sz) const
     {   void *d_ptr;
-        CUDA_OK(cudaMallocAsync(&d_ptr, sz, stream));
+        //CUDA_OK(cudaMallocAsync(&d_ptr, sz, stream));
+        cudaMallocAsync(&d_ptr, sz, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
         return d_ptr;
     }
     inline void Dfree(void* d_ptr) const
-    {   CUDA_OK(cudaFreeAsync(d_ptr, stream));   }
+    {  
+         //CUDA_OK(cudaFreeAsync(d_ptr, stream));
+        cudaFreeAsync(d_ptr, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+    }
 
     template<typename T>
     inline void HtoD(T* dst, const void* src, size_t nelems,
                      size_t sz = sizeof(T)) const
-    {   if (sz == sizeof(T))
-            CUDA_OK(cudaMemcpyAsync(dst, src, nelems*sizeof(T),
-                                    cudaMemcpyHostToDevice, stream));
-        else
-            CUDA_OK(cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
+    {   if (sz == sizeof(T)){
+            // CUDA_OK(cudaMemcpyAsync(dst, src, nelems*sizeof(T),
+            //                         cudaMemcpyHostToDevice, stream));
+            cudaMemcpyAsync(dst, src, nelems*sizeof(T),
+                                    cudaMemcpyHostToDevice, stream);
+            C10_CUDA_KERNEL_LAUNCH_CHECK();       
+        }          
+        else{
+            // CUDA_OK(cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
+            //                           std::min(sizeof(T), sz), nelems,
+            //                           cudaMemcpyHostToDevice, stream));
+            cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
                                       std::min(sizeof(T), sz), nelems,
-                                      cudaMemcpyHostToDevice, stream));
+                                      cudaMemcpyHostToDevice, stream);
+            C10_CUDA_KERNEL_LAUNCH_CHECK(); 
+        }   
     }
     template<typename T>
     inline void HtoD(T& dst, const void* src, size_t nelems,
@@ -144,7 +160,11 @@ public:
     {   DtoH(&dst[0], src, dst.size(), sz);   }
 
     inline void sync() const
-    {   CUDA_OK(cudaStreamSynchronize(stream));   }
+    {   
+        //CUDA_OK(cudaStreamSynchronize(stream));  
+        cudaStreamSynchronize(stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();  
+    }
 
     inline void notify(cudaHostFn_t cb, void* data)
     {   CUDA_OK(cudaLaunchHostFunc(stream, cb, data));   }
@@ -331,6 +351,6 @@ public:
     inline const T& operator[](size_t i) const  { return d_ptr[i]; }
     inline T& operator[](size_t i)              { return d_ptr[i]; }
 };
-}
-}
+}//namespace native
+}//namespace at
 

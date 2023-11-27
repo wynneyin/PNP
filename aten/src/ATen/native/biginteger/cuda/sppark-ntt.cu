@@ -24,7 +24,7 @@ static void ntt_zkp(Tensor& inout) {
     auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
-    RustError err = compute_ntt(
+    compute_ntt(
         0,
         self_ptr,
         lg_domain_size,  
@@ -41,7 +41,7 @@ static void intt_zkp(Tensor& inout) {
     auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
-    RustError err = compute_ntt(
+    compute_ntt(
         0,
         self_ptr,
         lg_domain_size,
@@ -58,7 +58,7 @@ static void ntt_coset_zkp(Tensor& inout) {
     auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
-    RustError err = compute_ntt(
+    compute_ntt(
         0,
         self_ptr,
         lg_domain_size,
@@ -75,7 +75,7 @@ static void intt_coset_zkp(Tensor& inout) {
     auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
-    RustError err = compute_ntt(
+    compute_ntt(
         0,
         self_ptr,
         lg_domain_size,

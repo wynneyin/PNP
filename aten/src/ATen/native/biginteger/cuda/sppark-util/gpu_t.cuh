@@ -6,7 +6,7 @@
 #endif
 
 #include "thread_pool_t.hpp"
-#include "exception.cuh"
+//#include "exception.cuh"
 #include "slice_t.hpp"
 
 #ifndef WARP_SZ
@@ -26,11 +26,19 @@ class event_t {
     cudaEvent_t event;
 public:
     event_t() : event(nullptr)
-    {   CUDA_OK(cudaEventCreate(&event, cudaEventDisableTiming));   }
+    {   
+        //CUDA_OK(cudaEventCreate(&event, cudaEventDisableTiming));
+        cudaEventCreate(&event, cudaEventDisableTiming);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+    }
     event_t(cudaStream_t stream) : event(nullptr)
     {
-        CUDA_OK(cudaEventCreate(&event, cudaEventDisableTiming));
-        CUDA_OK(cudaEventRecord(event, stream));
+        //CUDA_OK(cudaEventCreate(&event, cudaEventDisableTiming));
+        cudaEventCreate(&event, cudaEventDisableTiming);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+        //CUDA_OK(cudaEventRecord(event, stream));
+        cudaEventRecord(event, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
     }
     ~event_t()
     {   if (event) cudaEventDestroy(event);   }
@@ -38,9 +46,17 @@ public:
     {   return event;   }
 
     inline void record(cudaStream_t stream)
-    {   CUDA_OK(cudaEventRecord(event, stream));   }
+    {   
+        //CUDA_OK(cudaEventRecord(event, stream));
+        cudaEventRecord(event, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+    }
     inline void wait(cudaStream_t stream)
-    {   CUDA_OK(cudaStreamWaitEvent(stream, event));   }
+    {   
+        //CUDA_OK(cudaStreamWaitEvent(stream, event));
+        cudaStreamWaitEvent(stream, event);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
+    }
 };
 
 struct launch_params_t {
@@ -84,7 +100,7 @@ public:
             // CUDA_OK(cudaMemcpyAsync(dst, src, nelems*sizeof(T),
             //                         cudaMemcpyHostToDevice, stream));
             cudaMemcpyAsync(dst, src, nelems*sizeof(T),
-                                    cudaMemcpyHostToDevice, stream);
+                            cudaMemcpyHostToDevice, stream);
             C10_CUDA_KERNEL_LAUNCH_CHECK();       
         }          
         else{
@@ -92,8 +108,8 @@ public:
             //                           std::min(sizeof(T), sz), nelems,
             //                           cudaMemcpyHostToDevice, stream));
             cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
-                                      std::min(sizeof(T), sz), nelems,
-                                      cudaMemcpyHostToDevice, stream);
+                              std::min(sizeof(T), sz), nelems,
+                              cudaMemcpyHostToDevice, stream);
             C10_CUDA_KERNEL_LAUNCH_CHECK(); 
         }   
     }
@@ -122,17 +138,26 @@ public:
                             Types... args) const
     {
         if (gpu_props(gpu_id).sharedMemPerBlock < shared_sz)
-            CUDA_OK(cudaFuncSetAttribute(f, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_sz));
+            {
+                //CUDA_OK(cudaFuncSetAttribute(f, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_sz));
+                cudaFuncSetAttribute(f, cudaFuncAttributeMaxDynamicSharedMemorySize, shared_sz);
+                C10_CUDA_KERNEL_LAUNCH_CHECK();
+            }
         if (gridDim.x == 0 || blockDim.x == 0) {
             int blockSize, minGridSize;
 
-            CUDA_OK(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, f));
+            //CUDA_OK(cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, f));
+            cudaOccupancyMaxPotentialBlockSize(&minGridSize, &blockSize, f);
+            C10_CUDA_KERNEL_LAUNCH_CHECK();
             if (blockDim.x == 0) blockDim.x = blockSize;
             if (gridDim.x == 0)  gridDim.x = minGridSize;
         }
         void* va_args[sizeof...(args)] = { &args... };
-        CUDA_OK(cudaLaunchCooperativeKernel((const void*)f, gridDim, blockDim,
-                                            va_args, shared_sz, stream));
+        //CUDA_OK(cudaLaunchCooperativeKernel((const void*)f, gridDim, blockDim,
+        //                                    va_args, shared_sz, stream));
+        cudaLaunchCooperativeKernel((const void*)f, gridDim, blockDim,
+                                            va_args, shared_sz, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK();
     }
     template<typename... Types>
     inline void launch_coop(void(*f)(Types...), const launch_params_t& lps,
@@ -143,12 +168,23 @@ public:
     inline void DtoH(T* dst, const void* src, size_t nelems,
                      size_t sz = sizeof(T)) const
     {   if (sz == sizeof(T))
-            CUDA_OK(cudaMemcpyAsync(dst, src, nelems*sizeof(T),
-                                    cudaMemcpyDeviceToHost, stream));
+            {
+            // CUDA_OK(cudaMemcpyAsync(dst, src, nelems*sizeof(T),
+            //                         cudaMemcpyDeviceToHost, stream));
+            cudaMemcpyAsync(dst, src, nelems*sizeof(T),
+                                    cudaMemcpyDeviceToHost, stream);
+            C10_CUDA_KERNEL_LAUNCH_CHECK();
+            }
         else
-            CUDA_OK(cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
-                                      std::min(sizeof(T), sz), nelems,
-                                      cudaMemcpyDeviceToHost, stream));
+            {
+            // CUDA_OK(cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
+            //                           std::min(sizeof(T), sz), nelems,
+            //                           cudaMemcpyDeviceToHost, stream));
+            cudaMemcpy2DAsync(dst, sizeof(T), src, sz,
+                              std::min(sizeof(T), sz), nelems,
+                              cudaMemcpyDeviceToHost, stream);
+            C10_CUDA_KERNEL_LAUNCH_CHECK();
+            }
     }
     template<typename T>
     inline void DtoH(T& dst, const void* src, size_t nelems,
@@ -167,16 +203,28 @@ public:
     }
 
     inline void notify(cudaHostFn_t cb, void* data)
-    {   CUDA_OK(cudaLaunchHostFunc(stream, cb, data));   }
+    {   
+        //CUDA_OK(cudaLaunchHostFunc(stream, cb, data));
+        cudaLaunchHostFunc(stream, cb, data);
+        C10_CUDA_KERNEL_LAUNCH_CHECK(); 
+    }
 
     template<class T>
     inline void notify(T& sema)
     {   notify([](void* s) { reinterpret_cast<T*>(s)->notify(); }, &sema);   }
 
     inline void record(cudaEvent_t event)
-    {   CUDA_OK(cudaEventRecord(event, stream));   }
+    {   
+        //CUDA_OK(cudaEventRecord(event, stream));
+        cudaEventRecord(event, stream);
+        C10_CUDA_KERNEL_LAUNCH_CHECK(); 
+    }
     inline void wait(cudaEvent_t event)
-    {   CUDA_OK(cudaStreamWaitEvent(stream, event));   }
+    {   
+        //CUDA_OK(cudaStreamWaitEvent(stream, event));
+        cudaStreamWaitEvent(stream, event);
+        C10_CUDA_KERNEL_LAUNCH_CHECK(); 
+    }
 };
 
 class gpu_t {
@@ -194,7 +242,9 @@ public:
     gpu_t(int id, int real_id, const cudaDeviceProp& p)
     : gpu_id(id), cuda_id(real_id), prop(p)
     {   size_t freeMem;
-        CUDA_OK(cudaMemGetInfo(&freeMem, &total_mem));
+        //CUDA_OK(cudaMemGetInfo(&freeMem, &total_mem));
+        cudaMemGetInfo(&freeMem, &total_mem);
+        C10_CUDA_KERNEL_LAUNCH_CHECK(); 
     }
 
     inline int cid() const                  { return cuda_id; }
@@ -331,14 +381,18 @@ public:
     {
         if (nelems) {
             size_t n = (nelems+WARP_SZ-1) & ((size_t)0-WARP_SZ);
-            CUDA_OK(cudaMalloc(&d_ptr, n * sizeof(T)));
+            //CUDA_OK(cudaMalloc(&d_ptr, n * sizeof(T)));
+            cudaMalloc(&d_ptr, n * sizeof(T));
+            C10_CUDA_KERNEL_LAUNCH_CHECK(); 
         }
     }
     dev_ptr_t(size_t nelems, stream_t& s) : d_ptr(nullptr)
     {
         if (nelems) {
             size_t n = (nelems+WARP_SZ-1) & ((size_t)0-WARP_SZ);
-            CUDA_OK(cudaMallocAsync(&d_ptr, n * sizeof(T), s));
+            //CUDA_OK(cudaMallocAsync(&d_ptr, n * sizeof(T), s));
+            cudaMallocAsync(&d_ptr, n * sizeof(T), s);
+            C10_CUDA_KERNEL_LAUNCH_CHECK(); 
         }
     }
     dev_ptr_t(const dev_ptr_t& r) = delete;

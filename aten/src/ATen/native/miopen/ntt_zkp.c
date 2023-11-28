@@ -17,6 +17,7 @@ struct ProjectPoint {
     uint64_t y[4];
     uint64_t z[4];
 };
+
 struct AffinePoint {
     uint64_t x[4];
     uint64_t y[4];
@@ -801,54 +802,54 @@ void fq2_invert(uint64_t* self, const uint64_t* exp, uint64_t* res, const uint64
     NEG(res+4,res+4,MODULUS);
 }
 
-// //return the identity of the curve in projective form
-// struct ProjectPoint identity() {
-//     struct ProjectPoint point;
-//     for (int i = 0; i < 4; i++) {
-//         point.x[i] = 0;
-//         point.y[i] = 0;
-//         point.z[i] = 0;
-//     }
-//     return point;
-// }
+//return the identity of the curve in projective form
+struct ProjectPoint identity() {
+    struct ProjectPoint point;
+    for (int i = 0; i < 4; i++) {
+        point.x[i] = 0;
+        point.y[i] = 0;
+        point.z[i] = 0;
+    }
+    return point;
+}
 
-// void affine_identity(uint64_t* x,uint64_t* y){
-//     for(int i=0;i<4;i++){
-//         x[i]=0;
-//         y[i]=0;
-//     }
-// }
+void affine_identity(uint64_t* x,uint64_t* y){
+    for(int i=0;i<4;i++){
+        x[i]=0;
+        y[i]=0;
+    }
+}
 
-// bool is_identity(struct AffinePoint point) {
-//     bool is_zero = true;
-//     for (int i = 0; i < 4; i++) {
-//         is_zero = is_zero && (point.x[i] == 0) && (point.y[i] == 0);
-//     }
-//     return is_zero;
-// }
+bool is_identity(struct AffinePoint point) {
+    bool is_zero = true;
+    for (int i = 0; i < 4; i++) {
+        is_zero = is_zero && (point.x[i] == 0) && (point.y[i] == 0);
+    }
+    return is_zero;
+}
 
 
-// bool is_identity_project(struct ProjectPoint point) {
-//     bool is_zero = true;
-//     for (int i = 0; i < 4; i++) {
-//         is_zero = is_zero && (point.x[i] == 0) && (point.y[i] == 0) && (point.z[i] == 0);
-//     }
-//     return is_zero;
-// }
+bool is_identity_project(struct ProjectPoint point) {
+    bool is_zero = true;
+    for (int i = 0; i < 4; i++) {
+        is_zero = is_zero && (point.x[i] == 0) && (point.y[i] == 0) && (point.z[i] == 0);
+    }
+    return is_zero;
+}
 
-// //affine to projective 
-// struct ProjectPoint to_curve(struct AffinePoint point) {
-//     struct ProjectPoint result;
-//     bool ct = is_identity(point);
+//affine to projective 
+struct ProjectPoint to_curve(struct AffinePoint point) {
+    struct ProjectPoint result;
+    bool ct = is_identity(point);
 
-//     for (int i = 0; i < 4; i++) {
-//         result.x[i] = point.x[i];
-//         result.y[i] = point.y[i];
-//         result.z[i] = (ct) ? 0 : R_q[i];
-//     }
+    for (int i = 0; i < 4; i++) {
+        result.x[i] = point.x[i];
+        result.y[i] = point.y[i];
+        result.z[i] = (ct) ? 0 : R_q[i];
+    }
 
-//     return result;
-// }
+    return result;
+}
 
 // void batch_normalize(uint64_t* x,uint64_t* y,uint64_t* z,uint64_t* affine_x,uint64_t* affine_y){
 //     uint64_t acc[4];
@@ -889,248 +890,248 @@ void fq2_invert(uint64_t* self, const uint64_t* exp, uint64_t* res, const uint64
 //     from_raw(val,y,R2_q,INV_q,MODULUS_q); //G1_GENERATOR_Y
 // }
 
-// struct ProjectPoint point_double(struct ProjectPoint point) {
-//     struct ProjectPoint result;
-//     uint64_t a[4], b[4], c[4], d[4], e[4], f[4];
-//     SQUARE(point.x, a, INV_q, MODULUS_q);
-//     SQUARE(point.y, b, INV_q, MODULUS_q);
-//     SQUARE(b, c, INV_q, MODULUS_q);
-//     ADD(point.x, b, d, MODULUS_q);
-//     SQUARE(d, d, INV_q, MODULUS_q);
-//     SUB(d, a, d, MODULUS_q);
-//     SUB(d, c, d, MODULUS_q);
-//     ADD(d, d, d, MODULUS_q);
-//     ADD(a, a, e, MODULUS_q);
-//     ADD(e, a, e, MODULUS_q);
-//     SQUARE(e, f, INV_q, MODULUS_q);
+struct ProjectPoint point_double(struct ProjectPoint point) {
+    struct ProjectPoint result;
+    uint64_t a[4], b[4], c[4], d[4], e[4], f[4];
+    SQUARE(point.x, a, INV_q, MODULUS_q);
+    SQUARE(point.y, b, INV_q, MODULUS_q);
+    SQUARE(b, c, INV_q, MODULUS_q);
+    ADD(point.x, b, d, MODULUS_q);
+    SQUARE(d, d, INV_q, MODULUS_q);
+    SUB(d, a, d, MODULUS_q);
+    SUB(d, c, d, MODULUS_q);
+    ADD(d, d, d, MODULUS_q);
+    ADD(a, a, e, MODULUS_q);
+    ADD(e, a, e, MODULUS_q);
+    SQUARE(e, f, INV_q, MODULUS_q);
 
-//     uint64_t x3[4], y3[4], z3[4];
-//     uint64_t mid1[4], mid2[4];
-//     MUL(point.z, point.y, z3, INV_q, MODULUS_q);
-//     ADD(z3, z3, z3, MODULUS_q);
-//     ADD(d, d, mid1, MODULUS_q);
-//     SUB(f, mid1, x3, MODULUS_q);
-//     ADD(c, c, c, MODULUS_q);
-//     ADD(c, c, c, MODULUS_q);
-//     ADD(c, c, c, MODULUS_q);
-//     SUB(d, x3, mid1, MODULUS_q);
-//     MUL(e, mid1, mid2, INV_q, MODULUS_q);
-//     SUB(mid2, c, y3, MODULUS_q);
+    uint64_t x3[4], y3[4], z3[4];
+    uint64_t mid1[4], mid2[4];
+    MUL(point.z, point.y, z3, INV_q, MODULUS_q);
+    ADD(z3, z3, z3, MODULUS_q);
+    ADD(d, d, mid1, MODULUS_q);
+    SUB(f, mid1, x3, MODULUS_q);
+    ADD(c, c, c, MODULUS_q);
+    ADD(c, c, c, MODULUS_q);
+    ADD(c, c, c, MODULUS_q);
+    SUB(d, x3, mid1, MODULUS_q);
+    MUL(e, mid1, mid2, INV_q, MODULUS_q);
+    SUB(mid2, c, y3, MODULUS_q);
 
-//     bool ct = is_identity_project(point);
-//     for (int i = 0; i < 4; i++) {
-//         result.x[i] = (ct) ? 0 : x3[i];
-//         result.y[i] = (ct) ? 0 : y3[i];
-//         result.z[i] = (ct) ? 0 : z3[i];
-//     }
-//     return result;
-// }
+    bool ct = is_identity_project(point);
+    for (int i = 0; i < 4; i++) {
+        result.x[i] = (ct) ? 0 : x3[i];
+        result.y[i] = (ct) ? 0 : y3[i];
+        result.z[i] = (ct) ? 0 : z3[i];
+    }
+    return result;
+}
 
 
-// struct ProjectPoint affine_add_affine(struct AffinePoint self,struct AffinePoint rhs){
-//     struct ProjectPoint result;
-//     if(is_identity(self)){
-//         result=to_curve(rhs);
-//         return result;
-//     }
-//     else if(is_identity(rhs)){
-//         result=to_curve(self);
-//         return result;
-//     }
-//     else
-//     {
-//         if(is_equal(self.x,rhs.x)){
-//             if(is_equal(self.y,rhs.y)){
-//                 result = to_curve(self);
-//                 result = point_double(result);
-//                 return result;
-//             }
-//             else{
-//                 result=identity();
-//                 return result;
-//             }
-//         }
-//         else
-//         {
-//             uint64_t h[4],hh[4],i[4],j[4],r[4],v[4];
-//             SUB(rhs.x,self.x,h,MODULUS_q);
-//             SQUARE(h,hh,INV_q,MODULUS_q);
-//             ADD(hh,hh,i,MODULUS_q);
-//             ADD(i,i,i,MODULUS_q);
-//             MUL(h,i,j,INV_q,MODULUS_q);
-//             SUB(rhs.y,self.y,r,MODULUS_q);
-//             ADD(r,r,r,MODULUS_q);
-//             MUL(self.x,i,v,INV_q,MODULUS_q);
+struct ProjectPoint affine_add_affine(struct AffinePoint self,struct AffinePoint rhs){
+    struct ProjectPoint result;
+    if(is_identity(self)){
+        result=to_curve(rhs);
+        return result;
+    }
+    else if(is_identity(rhs)){
+        result=to_curve(self);
+        return result;
+    }
+    else
+    {
+        if(is_equal(self.x,rhs.x)){
+            if(is_equal(self.y,rhs.y)){
+                result = to_curve(self);
+                result = point_double(result);
+                return result;
+            }
+            else{
+                result=identity();
+                return result;
+            }
+        }
+        else
+        {
+            uint64_t h[4],hh[4],i[4],j[4],r[4],v[4];
+            SUB(rhs.x,self.x,h,MODULUS_q);
+            SQUARE(h,hh,INV_q,MODULUS_q);
+            ADD(hh,hh,i,MODULUS_q);
+            ADD(i,i,i,MODULUS_q);
+            MUL(h,i,j,INV_q,MODULUS_q);
+            SUB(rhs.y,self.y,r,MODULUS_q);
+            ADD(r,r,r,MODULUS_q);
+            MUL(self.x,i,v,INV_q,MODULUS_q);
 
-//             uint64_t mid1[4],mid2[4]; //存储中间结果
-//             uint64_t x3[4],y3[4],z3[4];
-//             SQUARE(r,mid1,INV_q,MODULUS_q);
-//             SUB(mid1,j,mid1,MODULUS_q);
-//             SUB(mid1,v,mid2,MODULUS_q);
-//             SUB(mid2,v,x3,MODULUS_q);
+            uint64_t mid1[4],mid2[4]; //存储中间结果
+            uint64_t x3[4],y3[4],z3[4];
+            SQUARE(r,mid1,INV_q,MODULUS_q);
+            SUB(mid1,j,mid1,MODULUS_q);
+            SUB(mid1,v,mid2,MODULUS_q);
+            SUB(mid2,v,x3,MODULUS_q);
 
-//             MUL(self.y,j,j,INV_q,MODULUS_q);
-//             ADD(j,j,j,MODULUS_q);
-//             SUB(v,x3,mid1,MODULUS_q);
-//             MUL(r,mid1,mid2,INV_q,MODULUS_q);
-//             SUB(mid2,j,y3,MODULUS_q);
+            MUL(self.y,j,j,INV_q,MODULUS_q);
+            ADD(j,j,j,MODULUS_q);
+            SUB(v,x3,mid1,MODULUS_q);
+            MUL(r,mid1,mid2,INV_q,MODULUS_q);
+            SUB(mid2,j,y3,MODULUS_q);
 
-//             ADD(h,h,z3,MODULUS_q);
-//             u64_to_u64(result.x,x3);
-//             u64_to_u64(result.y,y3);
-//             u64_to_u64(result.z,z3);
+            ADD(h,h,z3,MODULUS_q);
+            u64_to_u64(result.x,x3);
+            u64_to_u64(result.y,y3);
+            u64_to_u64(result.z,z3);
 
-//             return result;
-//         }
-//     }
-// }
+            return result;
+        }
+    }
+}
 
-// struct ProjectPoint project_add_affine(struct ProjectPoint self, struct AffinePoint rhs){
-//     struct ProjectPoint result;
-//     if(is_identity_project(self)){
-//         result=to_curve(rhs);
-//         return result;
-//     }
-//     else if (is_identity(rhs))
-//     {
-//         u64_to_u64(result.x,self.x);
-//         u64_to_u64(result.y,self.y);
-//         u64_to_u64(result.z,self.z);
-//         return result;
-//     }
-//     else{
-//         uint64_t z1z1[4],u2[4],s2[4];
-//         SQUARE(self.z,z1z1,INV_q,MODULUS_q);
-//         MUL(rhs.x,z1z1,u2,INV_q,MODULUS_q);
-//         MUL(rhs.y,z1z1,s2,INV_q,MODULUS_q);
-//         MUL(s2,self.z,s2,INV_q,MODULUS_q);
+struct ProjectPoint project_add_affine(struct ProjectPoint self, struct AffinePoint rhs){
+    struct ProjectPoint result;
+    if(is_identity_project(self)){
+        result=to_curve(rhs);
+        return result;
+    }
+    else if (is_identity(rhs))
+    {
+        u64_to_u64(result.x,self.x);
+        u64_to_u64(result.y,self.y);
+        u64_to_u64(result.z,self.z);
+        return result;
+    }
+    else{
+        uint64_t z1z1[4],u2[4],s2[4];
+        SQUARE(self.z,z1z1,INV_q,MODULUS_q);
+        MUL(rhs.x,z1z1,u2,INV_q,MODULUS_q);
+        MUL(rhs.y,z1z1,s2,INV_q,MODULUS_q);
+        MUL(s2,self.z,s2,INV_q,MODULUS_q);
 
-//         if(is_equal(self.x,u2)){
-//             if(is_equal(self.y,s2)){
-//                 result=point_double(self);
-//                 return result;
-//             }
-//             else{
-//                 result=identity();
-//                 return result;
-//             }
-//         }
-//         else
-//         {
-//             uint64_t h[4],hh[4],i[4],j[4],r[4],v[4];
-//             SUB(u2,self.x,h,MODULUS_q);
-//             SQUARE(h,hh,INV_q,MODULUS_q);
-//             ADD(hh,hh,i,MODULUS_q);
-//             ADD(i,i,i,MODULUS_q);
-//             MUL(h,i,j,INV_q,MODULUS_q);
-//             SUB(s2,self.y,r,MODULUS_q);
-//             ADD(r,r,r,MODULUS_q);
-//             MUL(self.x,i,v,INV_q,MODULUS_q);
+        if(is_equal(self.x,u2)){
+            if(is_equal(self.y,s2)){
+                result=point_double(self);
+                return result;
+            }
+            else{
+                result=identity();
+                return result;
+            }
+        }
+        else
+        {
+            uint64_t h[4],hh[4],i[4],j[4],r[4],v[4];
+            SUB(u2,self.x,h,MODULUS_q);
+            SQUARE(h,hh,INV_q,MODULUS_q);
+            ADD(hh,hh,i,MODULUS_q);
+            ADD(i,i,i,MODULUS_q);
+            MUL(h,i,j,INV_q,MODULUS_q);
+            SUB(s2,self.y,r,MODULUS_q);
+            ADD(r,r,r,MODULUS_q);
+            MUL(self.x,i,v,INV_q,MODULUS_q);
 
-//             uint64_t mid1[4],mid2[4];
-//             uint64_t x3[4],y3[4],z3[4];
-//             SQUARE(r,mid1,INV_q,MODULUS_q);
-//             SUB(mid1,j,mid1,MODULUS_q);
-//             SUB(mid1,v,mid2,MODULUS_q);
-//             SUB(mid2,v,x3,MODULUS_q);
+            uint64_t mid1[4],mid2[4];
+            uint64_t x3[4],y3[4],z3[4];
+            SQUARE(r,mid1,INV_q,MODULUS_q);
+            SUB(mid1,j,mid1,MODULUS_q);
+            SUB(mid1,v,mid2,MODULUS_q);
+            SUB(mid2,v,x3,MODULUS_q);
 
-//             MUL(self.y,j,j,INV_q,MODULUS_q);
-//             ADD(j,j,j,MODULUS_q);
-//             SUB(v,x3,mid1,MODULUS_q);
-//             MUL(mid1,r,mid2,INV_q,MODULUS_q);
-//             SUB(mid2,j,y3,MODULUS_q);
+            MUL(self.y,j,j,INV_q,MODULUS_q);
+            ADD(j,j,j,MODULUS_q);
+            SUB(v,x3,mid1,MODULUS_q);
+            MUL(mid1,r,mid2,INV_q,MODULUS_q);
+            SUB(mid2,j,y3,MODULUS_q);
 
-//             ADD(self.z,h,mid1,MODULUS_q);
-//             SQUARE(mid1,mid1,INV_q,MODULUS_q);
-//             SUB(mid1,z1z1,mid2,MODULUS_q);
-//             SUB(mid2,hh,z3,MODULUS_q);
+            ADD(self.z,h,mid1,MODULUS_q);
+            SQUARE(mid1,mid1,INV_q,MODULUS_q);
+            SUB(mid1,z1z1,mid2,MODULUS_q);
+            SUB(mid2,hh,z3,MODULUS_q);
 
-//             u64_to_u64(result.x,x3);
-//             u64_to_u64(result.y,y3);
-//             u64_to_u64(result.z,z3);
+            u64_to_u64(result.x,x3);
+            u64_to_u64(result.y,y3);
+            u64_to_u64(result.z,z3);
 
-//             return result;
-//         }
-//     }
-// }
+            return result;
+        }
+    }
+}
 
-// struct ProjectPoint project_add_project(struct ProjectPoint self,struct ProjectPoint rhs){
-//     struct ProjectPoint result;
-//     if(is_identity_project(self)){
-//         u64_to_u64(result.x,rhs.x);
-//         u64_to_u64(result.y,rhs.y);
-//         u64_to_u64(result.z,rhs.z);
-//         return result;
-//     }
-//     else if(is_identity_project(rhs)){
-//         u64_to_u64(result.x,self.x);
-//         u64_to_u64(result.y,self.y);
-//         u64_to_u64(result.z,self.z);
-//         return result;
-//     }
-//     else{
-//         uint64_t z1z1[4],z2z2[4];
-//         SQUARE(self.z,z1z1,INV_q,MODULUS_q);         //z^2
-//         SQUARE(rhs.z,z2z2,INV_q,MODULUS_q);         //Z^2
+struct ProjectPoint project_add_project(struct ProjectPoint self,struct ProjectPoint rhs){
+    struct ProjectPoint result;
+    if(is_identity_project(self)){
+        u64_to_u64(result.x,rhs.x);
+        u64_to_u64(result.y,rhs.y);
+        u64_to_u64(result.z,rhs.z);
+        return result;
+    }
+    else if(is_identity_project(rhs)){
+        u64_to_u64(result.x,self.x);
+        u64_to_u64(result.y,self.y);
+        u64_to_u64(result.z,self.z);
+        return result;
+    }
+    else{
+        uint64_t z1z1[4],z2z2[4];
+        SQUARE(self.z,z1z1,INV_q,MODULUS_q);         //z^2
+        SQUARE(rhs.z,z2z2,INV_q,MODULUS_q);         //Z^2
 
-//         uint64_t u1[4],u2[4];
-//         MUL(self.x,z2z2,u1,INV_q,MODULUS_q);
-//         MUL(rhs.x,z1z1,u2,INV_q,MODULUS_q);
+        uint64_t u1[4],u2[4];
+        MUL(self.x,z2z2,u1,INV_q,MODULUS_q);
+        MUL(rhs.x,z1z1,u2,INV_q,MODULUS_q);
 
-//         uint64_t s1[4],s2[4];
-//         MUL(self.y,z2z2,s1,INV_q,MODULUS_q);
-//         MUL(s1,rhs.z,s1,INV_q,MODULUS_q);
-//         MUL(rhs.y,z1z1,s2,INV_q,MODULUS_q);
-//         MUL(s2,self.z,s2,INV_q,MODULUS_q);
+        uint64_t s1[4],s2[4];
+        MUL(self.y,z2z2,s1,INV_q,MODULUS_q);
+        MUL(s1,rhs.z,s1,INV_q,MODULUS_q);
+        MUL(rhs.y,z1z1,s2,INV_q,MODULUS_q);
+        MUL(s2,self.z,s2,INV_q,MODULUS_q);
 
-//         if(is_equal(u1,u2)){
-//             if(is_equal(s1,s2)){
-//                 result=point_double(self); 
-//                 return result;
-//             }
-//             else{
-//                 result=identity(); //return identity
-//                 return result;
-//             }
-//         }
-//         else{
-//             uint64_t h[4],i[4],j[4],r[4],v[4];
-//             SUB(u2,u1,h,MODULUS_q);
-//             ADD(h,h,i,MODULUS_q);
-//             SQUARE(i,i,INV_q,MODULUS_q);
-//             MUL(h,i,j,INV_q,MODULUS_q);
-//             SUB(s2,s1,r,MODULUS_q);
-//             ADD(r,r,r,MODULUS_q);
-//             MUL(u1,i,v,INV_q,MODULUS_q);
+        if(is_equal(u1,u2)){
+            if(is_equal(s1,s2)){
+                result=point_double(self); 
+                return result;
+            }
+            else{
+                result=identity(); //return identity
+                return result;
+            }
+        }
+        else{
+            uint64_t h[4],i[4],j[4],r[4],v[4];
+            SUB(u2,u1,h,MODULUS_q);
+            ADD(h,h,i,MODULUS_q);
+            SQUARE(i,i,INV_q,MODULUS_q);
+            MUL(h,i,j,INV_q,MODULUS_q);
+            SUB(s2,s1,r,MODULUS_q);
+            ADD(r,r,r,MODULUS_q);
+            MUL(u1,i,v,INV_q,MODULUS_q);
 
-//             uint64_t x3[4],y3[4],z3[4],rr[4];
-//             SQUARE(r,rr,INV_q,MODULUS_q); //r^2
+            uint64_t x3[4],y3[4],z3[4],rr[4];
+            SQUARE(r,rr,INV_q,MODULUS_q); //r^2
 
-//             uint64_t mid1[4],mid2[4]; //用来存储中间变量
-//             SUB(rr,j,mid1,MODULUS_q);
-//             SUB(mid1,v,mid2,MODULUS_q);
-//             SUB(mid2,v,x3,MODULUS_q);
+            uint64_t mid1[4],mid2[4]; //用来存储中间变量
+            SUB(rr,j,mid1,MODULUS_q);
+            SUB(mid1,v,mid2,MODULUS_q);
+            SUB(mid2,v,x3,MODULUS_q);
 
-//             MUL(s1,j,s1,INV_q,MODULUS_q);
-//             ADD(s1,s1,s1,MODULUS_q);
-//             SUB(v,x3,mid1,MODULUS_q);
-//             MUL(mid1,r,mid2,INV_q,MODULUS_q);
-//             SUB(mid2,s1,y3,MODULUS_q);
+            MUL(s1,j,s1,INV_q,MODULUS_q);
+            ADD(s1,s1,s1,MODULUS_q);
+            SUB(v,x3,mid1,MODULUS_q);
+            MUL(mid1,r,mid2,INV_q,MODULUS_q);
+            SUB(mid2,s1,y3,MODULUS_q);
 
-//             ADD(self.z,rhs.z,mid1,MODULUS_q);
-//             SQUARE(mid1,mid1,INV_q,MODULUS_q);
-//             SUB(mid1,z1z1,mid2,MODULUS_q);
-//             SUB(mid2,z2z2,z3,MODULUS_q);
-//             MUL(z3,h,z3,INV_q,MODULUS_q);
+            ADD(self.z,rhs.z,mid1,MODULUS_q);
+            SQUARE(mid1,mid1,INV_q,MODULUS_q);
+            SUB(mid1,z1z1,mid2,MODULUS_q);
+            SUB(mid2,z2z2,z3,MODULUS_q);
+            MUL(z3,h,z3,INV_q,MODULUS_q);
 
-//             u64_to_u64(result.x,x3);
-//             u64_to_u64(result.y,y3);
-//             u64_to_u64(result.z,z3);
+            u64_to_u64(result.x,x3);
+            u64_to_u64(result.y,y3);
+            u64_to_u64(result.z,z3);
 
-//             return result;
-//         }
-//     }
-// }
+            return result;
+        }
+    }
+}
 
 // This is a simple double-and-add implementation of point
 // multiplication, moving from most significant to least
@@ -1419,115 +1420,115 @@ bool is_null(uint64_t* x){
     return is_one;
 }
 
-// //MSM
-// void MSM(uint64_t coeffs[][4], struct AffinePoint* base, struct ProjectPoint acc,struct ProjectPoint* result, uint64_t len){
-//     uint8_t** coeffs_repr;
-//     coeffs_repr = (uint8_t**)malloc(sizeof(uint8_t*)*len);//为二维数组分配行
-//     for (uint64_t i=0; i<len; i++)
-// 	{
-// 		//为每列分配32个u8大小的空间
-// 		coeffs_repr[i] = (uint8_t*)malloc(sizeof(uint8_t)*32); 
-// 	} 
-//     for (uint64_t i = 0; i < len; i++) {
-//         to_repr(coeffs[i],coeffs_repr[i],INV_r,MODULUS_r);
-//     }
+//MSM
+void MSM(uint64_t* coeffs, struct AffinePoint* base, struct ProjectPoint acc,struct ProjectPoint* result, uint64_t len){
+    uint8_t** coeffs_repr;
+    coeffs_repr = (uint8_t**)malloc(sizeof(uint8_t*)*len);//为二维数组分配行
+    for (uint64_t i=0; i<len; i++)
+	{
+		//为每列分配32个u8大小的空间
+		coeffs_repr[i] = (uint8_t*)malloc(sizeof(uint8_t)*32); 
+	} 
+    for (uint64_t i = 0; i < len; i++) {
+        to_repr(coeffs + i*Limbs_r, coeffs_repr[i], INV_r, MODULUS_r);
+    }
 
-//     int c;
-//     if(len<4){
-//         c=1;
-//     }
-//     else if(len<32){
-//         c=3;
-//     }
-//     else{
-//         c = (int)ceil(log(len));
-//     }
+    int c;
+    if(len<4){
+        c=1;
+    }
+    else if(len<32){
+        c=3;
+    }
+    else{
+        c = (int)ceil(log(len));
+    }
     
-//     int segments = (256 / c) + 1;
+    int segments = (256 / c) + 1;
 
-//     for (int current_segment = segments - 1; current_segment >= 0; current_segment--) {
-//         for (int i = 0; i < c; i++) {
-//             acc=point_double(acc); 
-//         }
+    for (int current_segment = segments - 1; current_segment >= 0; current_segment--) {
+        for (int i = 0; i < c; i++) {
+            acc = point_double(acc); 
+        }
 
-//         uint64_t bucket_len=(1<<c)-1;
-//         struct ProjectPoint* bucketArray = (struct ProjectPoint*)malloc(bucket_len * sizeof(struct ProjectPoint));
-//         for (uint64_t i=0; i<bucket_len; i++)
-//         {
-//            //初始化为1，视为空
-//            for(int j=0;j<4;j++){
-//             bucketArray[i].x[j]=1;
-//             bucketArray[i].y[j]=1;
-//             bucketArray[i].z[j]=1;
-//            }
-//         }
+        uint64_t bucket_len=(1<<c)-1;
+        struct ProjectPoint* bucketArray = (struct ProjectPoint*)malloc(bucket_len * sizeof(struct ProjectPoint));
+        for (uint64_t i=0; i<bucket_len; i++)
+        {
+           //初始化为1，视为空
+           for(int j=0;j<4;j++){
+            bucketArray[i].x[j]=1;
+            bucketArray[i].y[j]=1;
+            bucketArray[i].z[j]=1;
+           }
+        }
         
-//         for (uint64_t i = 0; i < len; i++) {          
-//             uint64_t coeff = get_at(current_segment, c, coeffs_repr[i]);
+        for (uint64_t i = 0; i < len; i++) {          
+            uint64_t coeff = get_at(current_segment, c, coeffs_repr[i]);
     
-//             //以下分支达到和add_assign函数一样的效果
-//             if (coeff != 0) {
-//                 //若当前桶为空，则先把坐标值放进去
-//                 if(is_null(bucketArray[coeff - 1].x)&&is_null(bucketArray[coeff - 1].y)&&is_null(bucketArray[coeff - 1].z))
-//                 {
-//                     u64_to_u64(bucketArray[coeff - 1].x, base[i].x);
-//                     u64_to_u64(bucketArray[coeff - 1].y, base[i].y);
-//                 }
-//                 //当前是仿射坐标形式，使用仿射坐标相加后转换到投影坐标
-//                 else if(is_null(bucketArray[coeff - 1].z))
-//                 {
-//                     struct AffinePoint mid;
+            //以下分支达到和add_assign函数一样的效果
+            if (coeff != 0) {
+                //若当前桶为空，则先把坐标值放进去
+                if(is_null(bucketArray[coeff - 1].x) && is_null(bucketArray[coeff - 1].y) && is_null(bucketArray[coeff - 1].z))
+                {
+                    u64_to_u64(bucketArray[coeff - 1].x, base[i].x);
+                    u64_to_u64(bucketArray[coeff - 1].y, base[i].y);
+                }
+                //当前是仿射坐标形式，使用仿射坐标相加后转换到投影坐标
+                else if(is_null(bucketArray[coeff - 1].z))
+                {
+                    struct AffinePoint mid;
 
-//                     u64_to_u64(mid.x,bucketArray[coeff - 1].x);
-//                     u64_to_u64(mid.y,bucketArray[coeff - 1].y);
+                    u64_to_u64(mid.x,bucketArray[coeff - 1].x);
+                    u64_to_u64(mid.y,bucketArray[coeff - 1].y);
                     
-//                     bucketArray[coeff - 1]=affine_add_affine(mid, base[i]);
-//                 }
-//                 //当前已经是投影坐标形式，使用投影坐标加仿射坐标，之后转换到仿射坐标
-//                 else 
-//                 {
-//                     bucketArray[coeff - 1]=project_add_affine(bucketArray[coeff - 1], base[i]);
-//                 }
-//             }
-//         }
+                    bucketArray[coeff - 1] = affine_add_affine(mid, base[i]);
+                }
+                //当前已经是投影坐标形式，使用投影坐标加仿射坐标，之后转换到仿射坐标
+                else 
+                {
+                    bucketArray[coeff - 1] = project_add_affine(bucketArray[coeff - 1], base[i]);
+                }
+            }
+        }
         
-//         // Summation by parts
-//         // e.g. 3a + 2b + 1c = a +
-//         //                    (a) + b +
-//         //                    ((a) + b) + c
-//         struct ProjectPoint sum;
-//         sum=identity(); 
-//         for (int i = bucket_len - 1; i >= 0; i--) {
-//             //以下分支达到和add函数一样的效果，和add_assign的区别是add函数里sum是主体,buckets是客体
-//             //若当前桶为空，则跳过不管
-//             if(is_null(bucketArray[i].x)&is_null(bucketArray[i].y)&is_null(bucketArray[i].z))
-//             {
-//                 acc=project_add_project(acc, sum);
-//                 continue;
-//             }
-//             //若当前桶内是仿射坐标形式，使用投影坐标加仿射坐标的方法
-//             else if(is_null(bucketArray[i].z))
-//             {
-//                 struct AffinePoint mid;
+        // Summation by parts
+        // e.g. 3a + 2b + 1c = a +
+        //                    (a) + b +
+        //                    ((a) + b) + c
+        struct ProjectPoint sum;
+        sum=identity(); 
+        for (int i = bucket_len - 1; i >= 0; i--) {
+            //以下分支达到和add函数一样的效果，和add_assign的区别是add函数里sum是主体,buckets是客体
+            //若当前桶为空，则跳过不管
+            if(is_null(bucketArray[i].x) & is_null(bucketArray[i].y) & is_null(bucketArray[i].z))
+            {
+                acc = project_add_project(acc, sum);
+                continue;
+            }
+            //若当前桶内是仿射坐标形式，使用投影坐标加仿射坐标的方法
+            else if(is_null(bucketArray[i].z))
+            {
+                struct AffinePoint mid;
 
-//                 u64_to_u64(mid.x,bucketArray[i].x);
-//                 u64_to_u64(mid.y,bucketArray[i].y);
+                u64_to_u64(mid.x,bucketArray[i].x);
+                u64_to_u64(mid.y,bucketArray[i].y);
                 
-//                 sum=project_add_affine(sum, mid);
-//             }
-//             //若当前已经是投影坐标形式，直接使用两个投影坐标相加的方式
-//             else 
-//             {
-//                 sum=project_add_project(sum, bucketArray[i]);
-//             }
-//             //*acc = *acc + &running_sum;
-//             acc=project_add_project(acc, sum);
-//         }
-//     }
-//     u64_to_u64(result->x,acc.x);
-//     u64_to_u64(result->y,acc.y);
-//     u64_to_u64(result->z,acc.z);
-// }
+                sum = project_add_affine(sum, mid);
+            }
+            //若当前已经是投影坐标形式，直接使用两个投影坐标相加的方式
+            else 
+            {
+                sum = project_add_project(sum, bucketArray[i]);
+            }
+            //*acc = *acc + &running_sum;
+            acc = project_add_project(acc, sum);
+        } 
+    }
+    u64_to_u64(result->x,acc.x);
+    u64_to_u64(result->y,acc.y);
+    u64_to_u64(result->z,acc.z);
+}
 
 
 

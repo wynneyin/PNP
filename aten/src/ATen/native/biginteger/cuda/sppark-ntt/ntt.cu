@@ -7,7 +7,7 @@ void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
 {
     //assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
-    TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length check")
+    TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length cannot exceed MAX_LG_DOMAIN_SIZE!");
     size_t domain_size = (size_t)1 << lg_domain_size;
 
     if (domain_size <= WARP_SZ)
@@ -114,7 +114,7 @@ void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
                         InputOutputOrder order, Direction direction,
                         Type type, bool coset_ext_pow)
 {
-    TORCH_CHECK(lg_domain_size != 0, "NTT Length check!");
+    TORCH_CHECK(lg_domain_size != 0, "NTT Length cannot be 0!");
     // if (lg_domain_size == 0)
     //     return RustError{cudaSuccess};
 

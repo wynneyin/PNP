@@ -20,10 +20,11 @@ namespace native {
 
 
 static void ntt_zkp(Tensor& inout) {
-    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "ntt_cuda", [&] {
-    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
+    TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
+    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "ntt_cuda", [&] {
+    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     compute_ntt(
         0,
         self_ptr,
@@ -37,10 +38,11 @@ static void ntt_zkp(Tensor& inout) {
 }
 
 static void intt_zkp(Tensor& inout) {
-    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "to_mont_cuda", [&] {
-    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
+    TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
+    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "intt_cuda", [&] {
+    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     compute_ntt(
         0,
         self_ptr,
@@ -54,10 +56,11 @@ static void intt_zkp(Tensor& inout) {
 }
 
 static void ntt_coset_zkp(Tensor& inout) {
-    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "to_mont_cuda", [&] {
-    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
+    TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
+    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "ntt_coset_cuda", [&] {
+    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     compute_ntt(
         0,
         self_ptr,
@@ -71,10 +74,11 @@ static void ntt_coset_zkp(Tensor& inout) {
 }
 
 static void intt_coset_zkp(Tensor& inout) {
-    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "to_mont_cuda", [&] {
-    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     auto len = inout.numel() / num_uint64(inout.scalar_type());
     uint32_t lg_domain_size = log2(len);
+    TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
+    AT_DISPATCH_FR_MONT_TYPES(inout.scalar_type(), "intt_coset_cuda", [&] {
+    auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(inout.mutable_data_ptr<scalar_t>());
     compute_ntt(
         0,
         self_ptr,

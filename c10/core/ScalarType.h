@@ -460,7 +460,7 @@ static inline bool isEllipticCurveType(ScalarType t) {
 
 static inline bool isBigIntegerType(ScalarType t) {
   // Don't forget to extend this when adding new BigInteger types
-  return t == ScalarType::Field64 || t == ScalarType::BigInteger || t == ScalarType::BigInteger_Mont || t == ScalarType::FiniteField || isEllipticCurveType(t);
+  return t == ScalarType::ULong || t == ScalarType::Field64 || t == ScalarType::BigInteger || t == ScalarType::BigInteger_Mont || t == ScalarType::FiniteField || isEllipticCurveType(t);
 }
 
 static inline bool isMontgomeryField(ScalarType t) {

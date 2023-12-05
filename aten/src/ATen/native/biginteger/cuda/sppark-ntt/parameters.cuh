@@ -40,7 +40,6 @@ private:
     {
         BLS12_381_Fr_G1* ret = (BLS12_381_Fr_G1*)gpu.Dmalloc(num_blocks * block_size * sizeof(BLS12_381_Fr_G1));
         generate_radixX_twiddles_X<<<16, block_size, 0, gpu>>>(ret, num_blocks, root);
-        //CUDA_OK(cudaGetLastError());
         C10_CUDA_KERNEL_LAUNCH_CHECK();
         return ret;
     }
@@ -49,14 +48,11 @@ public:
     NTTParameters(const bool _inverse, int id)
         : gpu(select_gpu(id)), inverse(_inverse)
     {
-        const BLS12_381_Fr_G1* roots = inverse ? (const BLS12_381_Fr_G1*)inverse_roots_of_unity
+        const BLS12_381_Fr_G1* roots = NTTParameters::inverse ? (const BLS12_381_Fr_G1*)inverse_roots_of_unity
                                     : (const BLS12_381_Fr_G1*)forward_roots_of_unity;
 
         const size_t blob_sz = 64 + 128 + 256 + 512 + 32;
         
-        // CUDA_OK(cudaGetSymbolAddress((void**)&radix6_twiddles,
-        //                              inverse ? inverse_radix6_twiddles
-        //                                      : forward_radix6_twiddles));
         cudaGetSymbolAddress((void**)&radix6_twiddles,
                                      inverse ? inverse_radix6_twiddles
                                              : forward_radix6_twiddles);
@@ -74,12 +70,8 @@ public:
                                                           roots[8],
                                                           roots[9],
                                                           roots[10]);
-        // CUDA_OK(cudaGetLastError());
         C10_CUDA_KERNEL_LAUNCH_CHECK();
 
-        // CUDA_OK(cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
-        //                         32 * sizeof(BLS12_381_Fr_G1), cudaMemcpyDeviceToDevice,
-        //                         gpu));
         cudaMemcpyAsync(radix6_twiddles, radix10_twiddles + 512,
                                 32 * sizeof(BLS12_381_Fr_G1), cudaMemcpyDeviceToDevice,
                                 gpu);
@@ -99,9 +91,7 @@ public:
 
         const size_t inverse_sz = S + 1;
         Domain_size_inverse = (uint32_t*)gpu.Dmalloc(inverse_sz * sizeof(BLS12_381_Fr_G1));
-        // CUDA_OK(cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
-        //                         inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
-        //                         gpu));
+        
         cudaMemcpyAsync(Domain_size_inverse, domain_size_inverse, 
                                 inverse_sz * sizeof(BLS12_381_Fr_G1), cudaMemcpyHostToDevice,
                                 gpu);
@@ -109,29 +99,57 @@ public:
 
         generate_partial_twiddles<<<WINDOW_SIZE/32, 32, 0, gpu>>>
             (partial_twiddles, roots[MAX_LG_DOMAIN_SIZE]);
-        //CUDA_OK(cudaGetLastError());
         C10_CUDA_KERNEL_LAUNCH_CHECK();
 
         generate_partial_twiddles<<<WINDOW_SIZE/32, 32, 0, gpu>>>
             (partial_group_gen_powers, inverse ? group_gen_inverse
                                                : group_gen);
-        //CUDA_OK(cudaGetLastError());
         C10_CUDA_KERNEL_LAUNCH_CHECK();
     }
-    NTTParameters(const NTTParameters&) = delete;
 
-    ~NTTParameters()
+    void initNTTParameters(BLS12_381_Fr_G1 (*pt)[WINDOW_SIZE],
+                        BLS12_381_Fr_G1* radix6, BLS12_381_Fr_G1* radix7, 
+                        BLS12_381_Fr_G1* radix8, BLS12_381_Fr_G1* radix9,
+                        BLS12_381_Fr_G1* radix10,
+                        BLS12_381_Fr_G1* radix6_6,
+                        BLS12_381_Fr_G1* radix6_12, BLS12_381_Fr_G1* radix7_7,
+                        BLS12_381_Fr_G1* radix8_8,BLS12_381_Fr_G1* radix9_9,
+                        BLS12_381_Fr_G1 (*pggp)[WINDOW_SIZE],
+                        uint64_t* domain_size_inverse)
     {
-        gpu.Dfree(partial_twiddles);
+        radix6 = radix6_twiddles;
+        radix7 = radix7_twiddles;
+        radix8 = radix8_twiddles;
+        radix9 = radix9_twiddles;
+        radix10 = radix10_twiddles;
 
-        gpu.Dfree(radix9_twiddles_9);
-        gpu.Dfree(radix8_twiddles_8);
-        gpu.Dfree(radix7_twiddles_7);
-        gpu.Dfree(radix6_twiddles_12);
-        gpu.Dfree(radix6_twiddles_6);
+        radix6_6 = radix6_twiddles_6;
+        radix6_12 = radix6_twiddles_12;
+        radix7_7 = radix7_twiddles_7;
+        radix8_8 = radix8_twiddles_8;
+        radix9_9 = radix9_twiddles_9;
 
-        gpu.Dfree(radix7_twiddles);
+        const size_t partial_sz = WINDOW_NUM * WINDOW_SIZE;
+
+        pt = partial_twiddles;
+        pggp = partial_group_gen_powers;
+
+        domain_size_inverse = (uint64_t*)Domain_size_inverse;
     }
+    //NTTParameters(const NTTParameters&) = delete;
+
+    // ~NTTParameters()
+    // {
+    //     gpu.Dfree(partial_twiddles);
+
+    //     gpu.Dfree(radix9_twiddles_9);
+    //     gpu.Dfree(radix8_twiddles_8);
+    //     gpu.Dfree(radix7_twiddles_7);
+    //     gpu.Dfree(radix6_twiddles_12);
+    //     gpu.Dfree(radix6_twiddles_6);
+
+    //     gpu.Dfree(radix7_twiddles);
+    // }
 
     inline void sync() const    { gpu.sync(); }
 

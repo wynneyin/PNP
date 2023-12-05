@@ -27,20 +27,37 @@ static void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
                         stream_t& stream, bool ext_pow = false);
 
 
-static void NTT_internal(BLS12_381_Fr_G1* d_inout, uint32_t lg_domain_size,
-                            InputOutputOrder order, Direction direction,
-                            Type type, stream_t& stream,
-                            bool coset_ext_pow = false);
+static void NTT_internal(BLS12_381_Fr_G1* d_inout,
+                         BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+                         BLS12_381_Fr_G1* radix_twiddles,
+                         BLS12_381_Fr_G1* radix_middles,
+                         BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
+                         uint32_t* Domain_size_inverse,
+                         uint32_t lg_domain_size,
+                         InputOutputOrder order, Direction direction,
+                         Type type, stream_t& stream,
+                         bool coset_ext_pow = false);
 
 
-static void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
-                        InputOutputOrder order, Direction direction,
-                        Type type, bool coset_ext_pow = false);
+static void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
+                 BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+                 BLS12_381_Fr_G1* radix_twiddles,
+                 BLS12_381_Fr_G1* radix_middles,
+                 BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
+                 uint32_t* Domain_size_inverse,
+                 uint32_t lg_domain_size,
+                 InputOutputOrder order, Direction direction, Type type,bool coset_ext_pow = false);
 
 
-void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, uint32_t lg_domain_size,
-                      InputOutputOrder ntt_order,
-                      Direction ntt_direction,
-                      Type ntt_type);
+void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, 
+                 BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+                 BLS12_381_Fr_G1* radix_twiddles,
+                 BLS12_381_Fr_G1* radix_middles,
+                 BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
+                 uint64_t* Domain_size_inverse,
+                 uint32_t lg_domain_size,
+                 InputOutputOrder ntt_order,
+                 Direction ntt_direction,
+                 Type ntt_type);
 }//namespace native
 }//namespace at

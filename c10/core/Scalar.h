@@ -350,10 +350,17 @@ class C10_API Scalar {
   template <
       typename T,
       typename std::enable_if<
-          std::is_integral<T>::value && !std::is_same<T, bool>::value,
+          std::is_integral<T>::value && !std::is_same<T, uint64_t>::value && !std::is_same<T, bool>::value,
           bool>::type* = nullptr>
   Scalar(T vv, bool) : tag(Tag::HAS_i) {
     v.i = convert<decltype(v.i), T>(vv);
+  }
+
+  template <
+      typename T,
+      typename std::enable_if<std::is_same<T, uint64_t>::value, bool>::type* = nullptr>
+  Scalar(T vv, bool) : tag(Tag::HAS_u) {
+    v.u = convert<decltype(v.u), T>(vv);;
   }
 
   template <

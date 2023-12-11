@@ -23,7 +23,7 @@ namespace native {
 static void params_zkp_template(Tensor& self, int gpu_id, bool is_intt){
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "load_ntt_params_cuda", [&] {     
         auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
-        NTTParameters ntt_parameters(is_intt, gpu_id, self_ptr);
+        NTTParameters(is_intt, gpu_id, self_ptr);
     });
 }
 

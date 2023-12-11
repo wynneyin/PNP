@@ -37,8 +37,6 @@ void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp,
                         stream_t& stream, bool ext_pow)
 {
     size_t domain_size = (size_t)1 << lg_domain_size;
-    // const auto gen_powers =
-    //     NTTParameters::all(intt)[stream]->partial_group_gen_powers;
 
     if (domain_size < WARP_SZ)
         LDE_distribute_powers<<<1, domain_size, 0, stream>>>
@@ -70,10 +68,6 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
     // results in a considerable performance gain.
 
     const bool intt = direction == Direction::inverse;
-    //const auto& ntt_parameters = *NTTParameters::all(intt)[stream];
-    //NTTParameters ntt_parameters(intt,stream);
-
-    //const auto& ntt_parameters = parameters.all()[stream];
     bool bitrev;
     Algorithm algorithm;
 

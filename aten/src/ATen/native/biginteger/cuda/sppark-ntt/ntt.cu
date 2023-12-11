@@ -6,7 +6,6 @@ namespace native {
 void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
 {
-    //assert(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
     TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length cannot exceed MAX_LG_DOMAIN_SIZE!");
     size_t domain_size = (size_t)1 << lg_domain_size;
 
@@ -27,14 +26,13 @@ void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
             <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(BLS12_381_Fr_G1), stream>>>
             (d_out, d_inp, lg_domain_size);
 
-    //CUDA_OK(cudaGetLastError());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
 void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp, 
                         bool bitrev,
                         uint32_t lg_domain_size, uint32_t lg_blowup,
-                        stream_t& stream, bool ext_pow)
+                        stream_t& stream, bool ext_pow = false)
 {
     size_t domain_size = (size_t)1 << lg_domain_size;
 
@@ -48,7 +46,6 @@ void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp,
         LDE_distribute_powers<<<domain_size / 512, 512, 0, stream>>>
                                 (inout, lg_blowup, bitrev, pggp, ext_pow);
 
-    //CUDA_OK(cudaGetLastError());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
@@ -61,7 +58,7 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
                     uint32_t lg_domain_size,
                     InputOutputOrder order, Direction direction,
                     Type type, stream_t& stream,
-                    bool coset_ext_pow)
+                    bool coset_ext_pow = false)
 {
     // Pick an NTT algorithm based on the input order and the desired output
     // order of the data. In certain cases, bit reversal can be avoided which
@@ -127,22 +124,14 @@ void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
           BLS12_381_Fr_G1 *partial_group_gen_powers,
           BLS12_381_Fr_G1* Domain_size_inverse,
           uint32_t lg_domain_size,
-          InputOutputOrder order, Direction direction, Type type, bool coset_ext_pow)
+          InputOutputOrder order, Direction direction, Type type, bool coset_ext_pow = false)
 {
     TORCH_CHECK(lg_domain_size != 0, "NTT Length cannot be 0!");
-    // if (lg_domain_size == 0)
-    //     return RustError{cudaSuccess};
-
-    //try {
 
     gpu.select();
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     size_t domain_size = (size_t)1 << lg_domain_size;
 
-    // cudaEvent_t start, stop;
-    // cudaEventCreate(&start);
-    // cudaEventCreate(&stop);
-    // cudaEventRecord(start, 0);
     
     NTT_internal(inout, 
                  partial_twiddles, radix_twiddles, radix_middles,
@@ -151,27 +140,6 @@ void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
                  coset_ext_pow);
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     gpu.sync();
-
-    // cudaEventRecord(stop, 0);
-    // cudaEventSynchronize(stop);
-
-    // float elapsed;
-    // cudaEventElapsedTime(&elapsed, start, stop);
-
-    // std::cout << "NTT_internal: " << elapsed << " ms" << std::endl;
-
-
-    //} 
-//  catch (const cuda_error& e) {
-//         gpu.sync();
-// #ifdef TAKE_RESPONSIBILITY_FOR_ERROR_MESSAGE
-//         return RustError{e.code(), e.what()};
-// #else
-//         return RustError{e.code()};
-// #endif
-//     }
-
-//     return RustError{cudaSuccess};
 }
 
 void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, 

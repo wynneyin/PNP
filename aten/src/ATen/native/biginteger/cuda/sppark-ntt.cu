@@ -49,16 +49,16 @@ static void ntt_zkp(Tensor& self, const Tensor& params) {
     uint32_t lg_domain_size = log2(len);
     TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "ntt_cuda", [&] {
-        auto L1 = WINDOW_SIZE * num_uint64(params.scalar_type());
+        auto L1 = WINDOW_NUM * WINDOW_SIZE;
         auto L2 = 2 * L1;
-        auto L3 = L2 + (32+64+128+256+512) * num_uint64(params.scalar_type());
-        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512) * num_uint64(params.scalar_type());
+        auto L3 = L2 + (32+64+128+256+512);
+        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
         auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L1);
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L2);
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L3);
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L4);
+        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
         auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
         
         compute_ntt(
@@ -83,16 +83,16 @@ static void intt_zkp(Tensor& self, const Tensor& params) {
     uint32_t lg_domain_size = log2(len);
     TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "intt_cuda", [&] {
-        auto L1 = WINDOW_SIZE * num_uint64(params.scalar_type());
+        auto L1 = WINDOW_NUM * WINDOW_SIZE;
         auto L2 = 2 * L1;
-        auto L3 = L2 + (32+64+128+256+512) * num_uint64(params.scalar_type());
-        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512) * num_uint64(params.scalar_type());
+        auto L3 = L2 + (32+64+128+256+512);
+        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
         auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L1);
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L2);
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L3);
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L4);
+        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
         auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,
@@ -116,16 +116,16 @@ static void ntt_coset_zkp(Tensor& self, const Tensor& params) {
     uint32_t lg_domain_size = log2(len);
     TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "ntt_coset_cuda", [&] {
-        auto L1 = WINDOW_SIZE * num_uint64(params.scalar_type());
+        auto L1 = WINDOW_NUM * WINDOW_SIZE;
         auto L2 = 2 * L1;
-        auto L3 = L2 + (32+64+128+256+512) * num_uint64(params.scalar_type());
-        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512) * num_uint64(params.scalar_type());
+        auto L3 = L2 + (32+64+128+256+512);
+        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
         auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L1);
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L2);
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L3);
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L4);
+        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
         auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,
@@ -149,16 +149,16 @@ static void intt_coset_zkp(Tensor& self, const Tensor& params) {
     uint32_t lg_domain_size = log2(len);
     TORCH_CHECK(len == 1<<lg_domain_size, "NTT Length check!");
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "intt_coset_cuda", [&] {
-        auto L1 = WINDOW_SIZE * num_uint64(params.scalar_type());
+        auto L1 = WINDOW_NUM * WINDOW_SIZE;
         auto L2 = 2 * L1;
-        auto L3 = L2 + (32+64+128+256+512) * num_uint64(params.scalar_type());
-        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512) * num_uint64(params.scalar_type());
+        auto L3 = L2 + (32+64+128+256+512);
+        auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
         auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L1);
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L2);
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L3);
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>() + L4);
+        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
         auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,

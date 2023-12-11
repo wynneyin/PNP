@@ -187,7 +187,7 @@ void CTkernel(int iterations, BLS12_381_Fr_G1* d_inout,
             d_inout, partial_twiddles, \
             radix7_twiddles+64+128+256+512, d_radixX_twiddles, \
             d_intermediate_twiddles, intermediate_twiddle_shift, \
-            is_intt, Domain_size_inverse+lg_domain_size*8
+            is_intt, Domain_size_inverse + lg_domain_size
 
     switch (radix) {
     case 6:

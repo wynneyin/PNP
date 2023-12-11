@@ -1153,35 +1153,19 @@ std::vector<Shape> compute_shape_selu(const at::Tensor& self) {
   return {Shape(self.scalar_type(), self.sizes().vec())};
 }
 
-// std::vector<Shape> compute_shape_params_zkp(at::TensorList params, int64_t gpu_id, bool is_intt){
-//   TORCH_CHECK(!params.empty(), "params_zkp expects a non-empty TensorList");
-//   std::vector<at::TensorList> shapes;
-//   shapes.emplace_back(
-//       params[0].scalar_type(), params[0].sizes().vec());
-//   shapes.emplace_back(
-//       params[1].scalar_type(), params[1].sizes().vec());
-//   shapes.emplace_back(
-//       params[2].scalar_type(), params[2].sizes().vec());
-//   shapes.emplace_back(
-//       params[3].scalar_type(), params[3].sizes().vec());
-//   shapes.emplace_back(
-//       params[4].scalar_type(), params[4].sizes().vec());
-//   return shapes;
-// }
-
-std::vector<Shape> compute_shape_intt_zkp(const at::Tensor& self, at::TensorList params) {
+std::vector<Shape> compute_shape_intt_zkp(const at::Tensor & self, const at::Tensor & params) {
   return {Shape(self.scalar_type(), self.sizes().vec())};
 }
 
-std::vector<Shape> compute_shape_ntt_zkp(const at::Tensor& self, at::TensorList params) {
+std::vector<Shape> compute_shape_ntt_zkp(const at::Tensor & self, const at::Tensor & params) {
   return {Shape(self.scalar_type(), self.sizes().vec())};
 }
 
-std::vector<Shape> compute_shape_intt_coset_zkp(const at::Tensor& self, at::TensorList params) {
+std::vector<Shape> compute_shape_intt_coset_zkp(const at::Tensor & self, const at::Tensor & params) {
   return {Shape(self.scalar_type(), self.sizes().vec())};
 }
 
-std::vector<Shape> compute_shape_ntt_coset_zkp(const at::Tensor& self, at::TensorList params) {
+std::vector<Shape> compute_shape_ntt_coset_zkp(const at::Tensor & self, const at::Tensor & params) {
   return {Shape(self.scalar_type(), self.sizes().vec())};
 }
 

@@ -31,34 +31,35 @@ void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
-void LDE_powers(BLS12_381_Fr_G1* inout, bool innt, bool bitrev,
+void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp, 
+                        bool bitrev,
                         uint32_t lg_domain_size, uint32_t lg_blowup,
                         stream_t& stream, bool ext_pow)
 {
     size_t domain_size = (size_t)1 << lg_domain_size;
-    const auto gen_powers =
-        NTTParameters::all(innt)[stream]->partial_group_gen_powers;
+    // const auto gen_powers =
+    //     NTTParameters::all(intt)[stream]->partial_group_gen_powers;
 
     if (domain_size < WARP_SZ)
         LDE_distribute_powers<<<1, domain_size, 0, stream>>>
-                                (inout, lg_blowup, bitrev, gen_powers, ext_pow);
+                                (inout, lg_blowup, bitrev, pggp, ext_pow);
     else if (domain_size < 512)
         LDE_distribute_powers<<<domain_size / WARP_SZ, WARP_SZ, 0, stream>>>
-                                (inout, lg_blowup, bitrev, gen_powers, ext_pow);
+                                (inout, lg_blowup, bitrev, pggp, ext_pow);
     else
         LDE_distribute_powers<<<domain_size / 512, 512, 0, stream>>>
-                                (inout, lg_blowup, bitrev, gen_powers, ext_pow);
+                                (inout, lg_blowup, bitrev, pggp, ext_pow);
 
     //CUDA_OK(cudaGetLastError());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
 void NTT_internal(BLS12_381_Fr_G1* d_inout,
-                    BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+                    BLS12_381_Fr_G1* partial_twiddles,
                     BLS12_381_Fr_G1* radix_twiddles,
                     BLS12_381_Fr_G1* radix_middles,
-                    BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
-                    uint32_t* Domain_size_inverse,
+                    BLS12_381_Fr_G1* partial_group_gen_powers,
+                    BLS12_381_Fr_G1* Domain_size_inverse,
                     uint32_t lg_domain_size,
                     InputOutputOrder order, Direction direction,
                     Type type, stream_t& stream,
@@ -99,7 +100,7 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
     }
 
     if (!intt && type == Type::coset)
-        LDE_powers(d_inout, intt, bitrev, lg_domain_size, 0, stream,
+        LDE_powers(d_inout, partial_group_gen_powers, bitrev, lg_domain_size, 0, stream,
                     coset_ext_pow);
 
     switch (algorithm) {
@@ -118,7 +119,7 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
     }
 
     if (intt && type == Type::coset)
-        LDE_powers(d_inout, intt, !bitrev, lg_domain_size, 0, stream,
+        LDE_powers(d_inout, partial_group_gen_powers, !bitrev, lg_domain_size, 0, stream,
                     coset_ext_pow);
 
     if (order == InputOutputOrder::RR)
@@ -126,11 +127,11 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
 }
 
 void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
-          BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+          BLS12_381_Fr_G1 *partial_twiddles,
           BLS12_381_Fr_G1* radix_twiddles,
           BLS12_381_Fr_G1* radix_middles,
-          BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
-          uint32_t* Domain_size_inverse,
+          BLS12_381_Fr_G1 *partial_group_gen_powers,
+          BLS12_381_Fr_G1* Domain_size_inverse,
           uint32_t lg_domain_size,
           InputOutputOrder order, Direction direction, Type type, bool coset_ext_pow)
 {
@@ -180,11 +181,11 @@ void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
 }
 
 void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, 
-                 BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+                 BLS12_381_Fr_G1* partial_twiddles,
                  BLS12_381_Fr_G1* radix_twiddles,
                  BLS12_381_Fr_G1* radix_middles,
-                 BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
-                 uint64_t* Domain_size_inverse,
+                 BLS12_381_Fr_G1* partial_group_gen_powers,
+                 BLS12_381_Fr_G1* Domain_size_inverse,
                  uint32_t lg_domain_size,
                  InputOutputOrder ntt_order,
                  Direction ntt_direction,
@@ -194,7 +195,7 @@ void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout,
 
     Base(gpu, inout, 
          partial_twiddles, radix_twiddles, radix_middles,
-         partial_group_gen_powers, (uint32_t *)Domain_size_inverse,
+         partial_group_gen_powers, Domain_size_inverse,
          lg_domain_size,
          ntt_order, ntt_direction, ntt_type);
 }

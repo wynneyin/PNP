@@ -11,7 +11,7 @@ from .lazy import LazyModuleMixin
 
 
 __all__ = [
-    'Linear'
+    'NTT_zkp'
 ]
 
 
@@ -52,61 +52,29 @@ class NTT_zkp(Module):
         >>> print(output.size())
         torch.Size([128, 30])
     """
-    __constants__ = ['in_features', 'out_features', 'windows_size', 'gpu_id',
-                     'is_intt', 'partial_twiddles', 'radix_twiddles', 'radix_middles',
-                     'partial_group_gen_powers', 'domain_size_inverse']
+    __constants__ = ['Params']
     
-    windows_size: int
-    gpu_id: int
-    is_intt: bool
-    partial_twiddles: Tensor
-    radix_twiddles: Tensor
-    radix_middles: Tensor
-    partial_group_gen_powers: Tensor
-    domain_size_inverse: Tensor
+    # windows_size: int
+    # gpu_id: int
+    # is_intt: bool
+    Params: Tensor
+    
 
 
-    def __init__(self, domain_size: int, gpu_id: int, is_intt: bool, 
-                 partial_twiddles: Tensor, radix_twiddles: Tensor, radix_middles: Tensor,
-                 partial_group_gen_powers: Tensor, domain_size_inverse: Tensor) -> None:
+    def __init__(self, is_intt: bool, gpu_id: int, domain_size: int) -> None:
         super().__init__()
-        windows_size = 2**14 #LG_WINDOW_SIZE ((MAX_LG_DOMAIN_SIZE + 1) / 2) 
-        size_partial_twiddles = (windows_size, 4)
-        size_radix_twiddles = (64 + 128 + 256 + 512 + 32, 4)
-        size_radix_middles = (64*64 + 4096*64 + 128*128 + 256*256 + 512*512, 4)
-        size_partial_group_gen_powers = (windows_size, 4)
-        size_domain_size_inverse = (domain_size+1, 4) 
-        partial_twiddles = torch.zeros(size_partial_twiddles, dtype = torch.BLS12_381_Fq_G1_Mont)
-        radix_twiddles = torch.zeros(size_radix_twiddles, dtype = torch.BLS12_381_Fq_G1_Mont)
-        radix_middles = torch.zeros(size_radix_middles, dtype = torch.BLS12_381_Fq_G1_Mont)
-        partial_group_gen_powers = torch.zeros(size_partial_group_gen_powers, dtype = torch.BLS12_381_Fq_G1_Mont)
-        domain_size_inverse = torch.zeros(size_domain_size_inverse, dtype = torch.uint32_t)
-        self.partial_twiddles = partial_twiddles
-        self.radix_twiddles = radix_twiddles
-        self.radix_middles = radix_middles
-        self.partial_group_gen_powers = partial_group_gen_powers
-        self.domain_size_inverse = domain_size_inverse
-        Parmas = torch.tensor_list([self.partial_twiddles, self.radix_twiddles, self.radix_middles,
-                                    self.partial_group_gen_powers, self.domain_size_inverse])
-        Parmas = torch.params_zkp(Parmas, gpu_id, is_intt, windows_size)
+        self.Params = torch.params_zkp(domain_size, gpu_id, is_intt, dtype= torch.BLS12_381_Fr_G1_Mont, device='cuda')
+
 
     def forward(self, input: Tensor, is_intt: bool, is_coset: bool) -> Tensor:
         if is_intt & is_coset:
-            output = torch.intt_coset_zkp(input, self.partial_twiddles, self.radix_twiddles,
-                              self.radix_middles, self.partial_group_gen_powers,
-                              self.domain_size_inverse)
+            output = torch.intt_coset_zkp(input, self.Params)
         elif is_intt:
-            output = torch.intt_zkp(input, self.partial_twiddles, self.radix_twiddles,
-                              self.radix_middles, self.partial_group_gen_powers,
-                              self.domain_size_inverse)
+            output = torch.intt_zkp(input, self.Params)
         elif is_coset:
-            output = torch.ntt_coset_zkp(input, self.partial_twiddles, self.radix_twiddles,
-                              self.radix_middles, self.partial_group_gen_powers,
-                              self.domain_size_inverse)
+            output = torch.ntt_coset_zkp(input, self.Params)
         else:
-            output = torch.ntt_zkp(input, self.partial_twiddles, self.radix_twiddles,
-                              self.radix_middles, self.partial_group_gen_powers,
-                              self.domain_size_inverse)
+            output = torch.ntt_zkp(input, self.Params)
         return output
 
 

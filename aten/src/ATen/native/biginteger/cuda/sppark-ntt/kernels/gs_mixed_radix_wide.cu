@@ -8,11 +8,11 @@ template <int intermediate_mul>
 __launch_bounds__(768, 1) __global__
 void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
              const unsigned int stage, const unsigned int iterations,
-             BLS12_381_Fr_G1* d_inout, const BLS12_381_Fr_G1 (*d_partial_twiddles)[WINDOW_SIZE],
+             BLS12_381_Fr_G1* d_inout, const BLS12_381_Fr_G1* d_partial_twiddles,
              const BLS12_381_Fr_G1* d_radix6_twiddles, const BLS12_381_Fr_G1* d_radixX_twiddles,
              const BLS12_381_Fr_G1* d_intermediate_twiddles,
              const unsigned int intermediate_twiddle_shift,
-             const bool is_intt, const uint32_t* d_domain_size_inverse)
+             const bool is_intt, const BLS12_381_Fr_G1* d_domain_size_inverse)
 {
 #if (__CUDACC_VER_MAJOR__-0) >= 11
     __builtin_assume(lg_domain_size <= MAX_LG_DOMAIN_SIZE);
@@ -136,8 +136,8 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
 
 #define NTT_ARGUMENTS \
         unsigned int, unsigned int, unsigned int, unsigned int, BLS12_381_Fr_G1*, \
-        const BLS12_381_Fr_G1 (*)[WINDOW_SIZE], const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, \
-        unsigned int, bool, const uint32_t*
+        const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, const BLS12_381_Fr_G1*, \
+        unsigned int, bool, const BLS12_381_Fr_G1*
 
 template __global__ void _GS_NTT<0>(NTT_ARGUMENTS);
 template __global__ void _GS_NTT<1>(NTT_ARGUMENTS);
@@ -146,11 +146,11 @@ template __global__ void _GS_NTT<2>(NTT_ARGUMENTS);
 #undef NTT_ARGUMENTS
 
 void GSkernel(int iterations, BLS12_381_Fr_G1* d_inout,
-          BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+          BLS12_381_Fr_G1* partial_twiddles,
           BLS12_381_Fr_G1* radix7_twiddles,
           BLS12_381_Fr_G1* radix_middles,
-          BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
-          uint32_t* Domain_size_inverse,
+          BLS12_381_Fr_G1* partial_group_gen_powers,
+          BLS12_381_Fr_G1* Domain_size_inverse,
           int lg_domain_size, bool is_intt,
           const cudaStream_t& stream, int* stage)
 {
@@ -275,11 +275,11 @@ void GSkernel(int iterations, BLS12_381_Fr_G1* d_inout,
 
 void GS_NTT(BLS12_381_Fr_G1* d_inout, const int lg_domain_size, const bool is_intt,
     const cudaStream_t& stream,
-    BLS12_381_Fr_G1 (*partial_twiddles)[WINDOW_SIZE],
+    BLS12_381_Fr_G1* partial_twiddles,
     BLS12_381_Fr_G1* radix_twiddles,
     BLS12_381_Fr_G1* radix_middles,
-    BLS12_381_Fr_G1 (*partial_group_gen_powers)[WINDOW_SIZE],
-    uint32_t* Domain_size_inverse)
+    BLS12_381_Fr_G1* partial_group_gen_powers,
+    BLS12_381_Fr_G1* Domain_size_inverse)
 {
     TORCH_CHECK(lg_domain_size <= 40, "GS_NTT length cannot exceed 40!");
     int stage = lg_domain_size;

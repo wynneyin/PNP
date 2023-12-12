@@ -5,14 +5,16 @@
 #include "ATen/native/biginteger/cuda/CurveDef.cuh"
 #include "gen_twiddles.cuh"
 
+namespace at { namespace native {
 
 template <typename T>
 struct NTTHyperParam;
+
+}} // namespace at::native
+
 #include "alt_bn128.h"
 #include "bls12_377.h"
 #include "bls12_381.h"
-
-
 
 namespace at { 
 namespace native {

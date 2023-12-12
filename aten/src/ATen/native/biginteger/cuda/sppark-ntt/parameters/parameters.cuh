@@ -15,7 +15,7 @@ struct NTTHyperParam;
 #include "alt_bn128.h"
 #include "bls12_377.h"
 #include "bls12_381.h"
-
+#include "pasta.h"
 namespace at { 
 namespace native {
 

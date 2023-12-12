@@ -28,7 +28,9 @@ template <typename fr_t>
 __launch_bounds__(1024) __global__
 void bit_rev_permutation_aux(fr_t* out, const fr_t* in, uint32_t lg_domain_size)
 {
-    extern __shared__ fr_t exchange[];
+    extern __shared__ char shmem[];
+    auto exchange = reinterpret_cast<fr_t *>(shmem);
+    // extern __shared__ fr_t exchange[];
     fr_t (*xchg)[8][8] = reinterpret_cast<decltype(xchg)>(exchange);
 
     index_t step = (index_t)1 << (lg_domain_size - 3);
@@ -105,7 +107,10 @@ void LDE_spread_distribute_powers(fr_t* out, fr_t* in,
                                   const fr_t* gen_powers,
                                   uint32_t lg_domain_size, uint32_t lg_blowup)
 {
-    extern __shared__ fr_t exchange[]; // block size
+
+    extern __shared__ char shmem[];
+    auto exchange = reinterpret_cast<fr_t *>(shmem);
+    // extern __shared__ fr_t exchange[]; // block size
 
     assert(lg_domain_size + lg_blowup <= MAX_LG_DOMAIN_SIZE);
 

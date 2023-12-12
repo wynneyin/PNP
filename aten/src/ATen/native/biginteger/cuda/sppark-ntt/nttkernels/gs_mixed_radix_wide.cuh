@@ -44,7 +44,9 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         r0 = r0 + r1;
         r1 = t;
 
-        extern __shared__ fr_t shared_exchange[];
+        extern __shared__ char shmem[];
+        auto shared_exchange = reinterpret_cast<fr_t *>(shmem);
+        // extern __shared__ fr_t shared_exchange[];
 
         bool pos = rank < laneMask;
 #ifdef __CUDA_ARCH__
@@ -133,17 +135,6 @@ void _GS_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     d_inout[idx0] = r0;
     d_inout[idx1] = r1;
 }
-
-// #define NTT_ARGUMENTS \
-//         unsigned int, unsigned int, unsigned int, unsigned int, fr_t*, \
-//         const fr_t*, const fr_t*, const fr_t*, const fr_t*, \
-//         unsigned int, bool, const fr_t*
-
-// template __global__ void _GS_NTT<0>(NTT_ARGUMENTS);
-// template __global__ void _GS_NTT<1>(NTT_ARGUMENTS);
-// template __global__ void _GS_NTT<2>(NTT_ARGUMENTS);
-
-// #undef NTT_ARGUMENTS
 
 template <typename fr_t>
 void GSkernel(int iterations, fr_t* d_inout,

@@ -104,7 +104,10 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
         fr_t t = d_radixX_twiddles[rank << (radix - (s + 1))];
 
         // shfl_bfly through the shared memory
-        extern __shared__ fr_t shared_exchange[];
+        extern __shared__ char shmem[];
+        auto shared_exchange = reinterpret_cast<fr_t *>(shmem);
+
+        // extern __shared__ fr_t shared_exchange[];
 
 #ifdef __CUDA_ARCH__
         fr_t x = fr_t::csel(r1, r0, pos);
@@ -139,17 +142,6 @@ void _CT_NTT(const unsigned int radix, const unsigned int lg_domain_size,
     d_inout[idx0] = r0;
     d_inout[idx1] = r1;
 }
-
-// #define NTT_ARGUMENTS \
-//         unsigned int, unsigned int, unsigned int, unsigned int, fr_t*, \
-//         const fr_t *, const fr_t*, const fr_t*, const fr_t*, \
-//         unsigned int, bool, const fr_t*
-
-// template __global__ void _CT_NTT<0>(NTT_ARGUMENTS);
-// template __global__ void _CT_NTT<1>(NTT_ARGUMENTS);
-// template __global__ void _CT_NTT<2>(NTT_ARGUMENTS);
-
-// #undef NTT_ARGUMENTS
 
 template <typename fr_t>
 void CTkernel(int iterations, fr_t* d_inout, 
@@ -278,7 +270,6 @@ void CTkernel(int iterations, fr_t* d_inout,
     #undef NTT_CONFIGURATION
     #undef NTT_ARGUMENTS
     
-    //CUDA_OK(cudaGetLastError());
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     
 }

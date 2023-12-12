@@ -23,7 +23,7 @@ namespace native {
 
 static void params_zkp_template(Tensor& self, int gpu_id, bool is_intt){
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "load_ntt_params_cuda", [&] {     
-        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
+        auto self_ptr = reinterpret_cast<scalar_t::compute_type*>(self.mutable_data_ptr<scalar_t>());
         NTTParameters(is_intt, gpu_id, self_ptr);
     });
 }
@@ -39,7 +39,9 @@ Tensor params_zkp_cuda(int64_t domain_size, int64_t gpu_id, bool is_intt,
     auto S2 = 32+64+128+256+512;
     auto S3 = 64*64 + 4096*64 + 128*128 + 256*256 + 512*512;
     auto S4 = domain_size + 1;
-    auto params = at::empty({S1 + S2 + S3 + S4, 4}, kBLS12_381_Fr_G1_Mont, layout, device, pin_memory, c10::nullopt); 
+    //TODO: how to get second-dim of the tensor?
+
+    auto params = at::empty({S1 + S2 + S3 + S4, num_uint64(*dtype)}, dtype, layout, device, pin_memory, c10::nullopt); 
     params_zkp_template(params, gpu_id, is_intt);
     return params;
 }
@@ -55,12 +57,12 @@ static void ntt_zkp(Tensor& self, const Tensor& params) {
         auto L3 = L2 + (32+64+128+256+512);
         auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
-        auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
-        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
+        auto pt_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>());
+        auto pggp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L4;
+        auto self_ptr = reinterpret_cast<scalar_t::compute_type*>(self.mutable_data_ptr<scalar_t>());
         
         compute_ntt(
             0,
@@ -89,12 +91,12 @@ static void intt_zkp(Tensor& self, const Tensor& params) {
         auto L3 = L2 + (32+64+128+256+512);
         auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
-        auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
-        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
+        auto pt_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>());
+        auto pggp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L4;
+        auto self_ptr = reinterpret_cast<scalar_t::compute_type*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,
             self_ptr,
@@ -122,12 +124,12 @@ static void ntt_coset_zkp(Tensor& self, const Tensor& params) {
         auto L3 = L2 + (32+64+128+256+512);
         auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
-        auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
-        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
+        auto pt_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>());
+        auto pggp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L4;
+        auto self_ptr = reinterpret_cast<scalar_t::compute_type*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,
             self_ptr,
@@ -155,12 +157,12 @@ static void intt_coset_zkp(Tensor& self, const Tensor& params) {
         auto L3 = L2 + (32+64+128+256+512);
         auto L4 = L3 + (64*64 + 4096*64 + 128*128 + 256*256 + 512*512);
 
-        auto pt_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>());
-        auto pggp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L1;
-        auto rp_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L2;
-        auto rpm_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L3;
-        auto size_inverse_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(params.mutable_data_ptr<scalar_t>()) + L4;
-        auto self_ptr = reinterpret_cast<BLS12_381_Fr_G1*>(self.mutable_data_ptr<scalar_t>());
+        auto pt_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>());
+        auto pggp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L1;
+        auto rp_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L2;
+        auto rpm_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L3;
+        auto size_inverse_ptr = reinterpret_cast<scalar_t::compute_type*>(params.mutable_data_ptr<scalar_t>()) + L4;
+        auto self_ptr = reinterpret_cast<scalar_t::compute_type*>(self.mutable_data_ptr<scalar_t>());
         compute_ntt(
             0,
             self_ptr,

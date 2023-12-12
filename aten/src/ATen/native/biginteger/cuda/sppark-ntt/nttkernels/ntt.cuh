@@ -1,9 +1,25 @@
-#include "ATen/native/biginteger/cuda/sppark-ntt/ntt.cuh"
+#pragma once
+
+#include <cassert>
+#include <iostream>
+#include <ATen/cuda/CUDAContext.h>
+#include <ATen/native/cuda/thread_constants.h>
+#include "ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh"
+#include "ATen/native/biginteger/cuda/CurveDef.cuh"
+#include "kernels.cuh"
+#include "algorithm.cuh"
+#include <cuda.h>
 
 namespace at { 
 namespace native {
-    
-void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
+
+enum class InputOutputOrder { NN, NR, RN, RR };
+enum class Direction { forward, inverse };
+enum class Type { standard, coset };
+enum class Algorithm { GS, CT };
+
+template <typename fr_t>
+void bit_rev(fr_t* d_out, const fr_t* d_inp,
                         uint32_t lg_domain_size, stream_t& stream)
 {
     TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length cannot exceed MAX_LG_DOMAIN_SIZE!");
@@ -19,17 +35,18 @@ void bit_rev(BLS12_381_Fr_G1* d_out, const BLS12_381_Fr_G1* d_inp,
             (d_out, d_inp, lg_domain_size);
     else if (domain_size < 1024)
         bit_rev_permutation_aux
-            <<<1, domain_size / 8, domain_size * sizeof(BLS12_381_Fr_G1), stream>>>
+            <<<1, domain_size / 8, domain_size * sizeof(fr_t), stream>>>
             (d_out, d_inp, lg_domain_size);
     else
         bit_rev_permutation_aux
-            <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(BLS12_381_Fr_G1), stream>>>
+            <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(fr_t), stream>>>
             (d_out, d_inp, lg_domain_size);
 
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
-void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp, 
+template <typename fr_t>
+void LDE_powers(fr_t* inout, fr_t* pggp, 
                         bool bitrev,
                         uint32_t lg_domain_size, uint32_t lg_blowup,
                         stream_t& stream, bool ext_pow = false)
@@ -49,12 +66,13 @@ void LDE_powers(BLS12_381_Fr_G1* inout, BLS12_381_Fr_G1* pggp,
     C10_CUDA_KERNEL_LAUNCH_CHECK();
 }
 
-void NTT_internal(BLS12_381_Fr_G1* d_inout,
-                    BLS12_381_Fr_G1* partial_twiddles,
-                    BLS12_381_Fr_G1* radix_twiddles,
-                    BLS12_381_Fr_G1* radix_middles,
-                    BLS12_381_Fr_G1* partial_group_gen_powers,
-                    BLS12_381_Fr_G1* Domain_size_inverse,
+template <typename fr_t>
+void NTT_internal(fr_t* d_inout,
+                    fr_t* partial_twiddles,
+                    fr_t* radix_twiddles,
+                    fr_t* radix_middles,
+                    fr_t* partial_group_gen_powers,
+                    fr_t* Domain_size_inverse,
                     uint32_t lg_domain_size,
                     InputOutputOrder order, Direction direction,
                     Type type, stream_t& stream,
@@ -117,49 +135,32 @@ void NTT_internal(BLS12_381_Fr_G1* d_inout,
         bit_rev(d_inout, d_inout, lg_domain_size, stream);
 }
 
-void Base(const gpu_t& gpu, BLS12_381_Fr_G1* inout,
-          BLS12_381_Fr_G1 *partial_twiddles,
-          BLS12_381_Fr_G1* radix_twiddles,
-          BLS12_381_Fr_G1* radix_middles,
-          BLS12_381_Fr_G1 *partial_group_gen_powers,
-          BLS12_381_Fr_G1* Domain_size_inverse,
-          uint32_t lg_domain_size,
-          InputOutputOrder order, Direction direction, Type type, bool coset_ext_pow = false)
-{
-    TORCH_CHECK(lg_domain_size != 0, "NTT Length cannot be 0!");
-
-    gpu.select();
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
-    size_t domain_size = (size_t)1 << lg_domain_size;
-
-    
-    NTT_internal(inout, 
-                 partial_twiddles, radix_twiddles, radix_middles,
-                 partial_group_gen_powers, Domain_size_inverse,
-                 lg_domain_size, order, direction, type, gpu,
-                 coset_ext_pow);
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
-    gpu.sync();
-}
-
-void compute_ntt(size_t device_id, BLS12_381_Fr_G1* inout, 
-                 BLS12_381_Fr_G1* partial_twiddles,
-                 BLS12_381_Fr_G1* radix_twiddles,
-                 BLS12_381_Fr_G1* radix_middles,
-                 BLS12_381_Fr_G1* partial_group_gen_powers,
-                 BLS12_381_Fr_G1* Domain_size_inverse,
+template <typename fr_t>
+void compute_ntt(size_t device_id, fr_t* inout, 
+                 fr_t* partial_twiddles,
+                 fr_t* radix_twiddles,
+                 fr_t* radix_middles,
+                 fr_t* partial_group_gen_powers,
+                 fr_t* Domain_size_inverse,
                  uint32_t lg_domain_size,
                  InputOutputOrder ntt_order,
                  Direction ntt_direction,
                  Type ntt_type)
 {
-    auto& gpu = select_gpu(device_id);
+    TORCH_CHECK(lg_domain_size != 0, "NTT Length cannot be 0!");
 
-    Base(gpu, inout, 
-         partial_twiddles, radix_twiddles, radix_middles,
-         partial_group_gen_powers, Domain_size_inverse,
-         lg_domain_size,
-         ntt_order, ntt_direction, ntt_type);
+    auto& gpu = select_gpu(device_id);
+    gpu.select();
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
+
+    size_t domain_size = (size_t)1 << lg_domain_size;
+
+    NTT_internal(inout, 
+                 partial_twiddles, radix_twiddles, radix_middles,
+                 partial_group_gen_powers, Domain_size_inverse,
+                 lg_domain_size, ntt_order, ntt_direction, ntt_type, gpu);
+    C10_CUDA_KERNEL_LAUNCH_CHECK();
+    gpu.sync();
 }
 
 }//namespace native

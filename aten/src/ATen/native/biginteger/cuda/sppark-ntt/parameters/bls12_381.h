@@ -2,7 +2,7 @@
 // Licensed nder the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
-#include "ATen/native/biginteger/cuda/ff/bls12-381.hpp"
+#include <cstdint>
 #pragma warning(disable : 63)
 #pragma GCC diagnostic ignored "-Wshift-count-overflow"
 namespace at { 
@@ -126,6 +126,5 @@ const uint32_t domain_size_inverse[(S + 1)*8] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001
 };
 
-#undef BLS12_381_Fr_G1
 }//native
 }//at

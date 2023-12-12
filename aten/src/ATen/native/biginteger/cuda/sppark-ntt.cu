@@ -1,7 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <ATen/native/biginteger/cuda/sppark-ntt/ntt.cuh>
+#include "sppark-ntt/nttkernels/ntt.cuh"
+#include "sppark-ntt/parameters/parameters.cuh"
 #include <ATen/core/Tensor.h>
 #include <ATen/Dispatch.h>
 #include <ATen/TensorOperators.h>
@@ -18,7 +19,7 @@
 //temporarily set device_id to 0, set InputOutputOrder to NN
 namespace at {
 namespace native {
-
+    
 
 static void params_zkp_template(Tensor& self, int gpu_id, bool is_intt){
     AT_DISPATCH_FR_MONT_TYPES(self.scalar_type(), "load_ntt_params_cuda", [&] {     

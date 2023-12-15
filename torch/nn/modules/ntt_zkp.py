@@ -18,7 +18,7 @@ __all__ = [
 class NTT_zkp(Module):
     r"""Applies a Number Theory Transformation(NTT) for a 2-dim tensor`
 
-    This module supports only supports all curve types, does not support common types.
+    This module only supports all curve types, does not support common types.
 
     Args:
         Params: a tensor that stores all parameters required in the NTT process.

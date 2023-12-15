@@ -121,5 +121,5 @@ struct NTTHyperParam<BLS12_381_Fr_G1> {
     };
 };
 
-}//native
-}//at
+}//namespace native
+}//namespace at

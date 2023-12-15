@@ -17,6 +17,7 @@
 #include <math.h>
 
 //temporarily set device_id to 0, set InputOutputOrder to NN
+//TODO: optimize memory copy for inout data
 namespace at {
 namespace native {
     

@@ -153,7 +153,6 @@ void CTkernel(int iterations, fr_t* d_inout,
         int lg_domain_size, bool is_intt,
         const cudaStream_t& stream, int* stage)
 {
-    //assert(iterations <= 10);
     TORCH_CHECK(iterations <= 10, "CT_NTT iterations cannot exceed 10!");
     const int radix = iterations < 6 ? 6 : iterations;
 
@@ -165,7 +164,6 @@ void CTkernel(int iterations, fr_t* d_inout,
     block_size = (num_threads <= block_size) ? num_threads : block_size;
     num_blocks = (num_threads + block_size - 1) / block_size;
 
-    //assert(num_blocks == (unsigned int)num_blocks);
     TORCH_CHECK(num_blocks == (unsigned int)num_blocks, "NTT blocks check!");
     
     fr_t* d_radixX_twiddles = nullptr;
@@ -273,88 +271,6 @@ void CTkernel(int iterations, fr_t* d_inout,
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     
 }
-
-// template <typename fr_t>
-// void CT_NTT(fr_t* d_inout, const int lg_domain_size, const bool is_intt,
-//             const cudaStream_t& stream,
-//             fr_t* partial_twiddles,
-//             fr_t* radix_twiddles,
-//             fr_t* radix_middles,
-//             fr_t* partial_group_gen_powers,
-//             fr_t* Domain_size_inverse)
-// {
-//     TORCH_CHECK(lg_domain_size <= 40, "CT_NTT length cannot exceed 40");
-//     int stage = 0;
-//     if (lg_domain_size <= 10) {
-//         CTkernel(lg_domain_size, d_inout, 
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//     } else if (lg_domain_size <= 17) {
-//         CTkernel(lg_domain_size / 2 + lg_domain_size % 2, d_inout, 
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(lg_domain_size / 2, d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//     } else if (lg_domain_size <= 30) {
-//         int step = lg_domain_size / 3;
-//         int rem = lg_domain_size % 3;
-//         CTkernel(step, d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(step + (lg_domain_size == 29 ? 1 : 0), d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(step + (lg_domain_size == 29 ? 1 : rem), d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//     } else if (lg_domain_size <= 40) {
-//         int step = lg_domain_size / 4;
-//         int rem = lg_domain_size % 4;
-//         CTkernel(step, d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(step + (rem > 2), d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(step + (rem > 1), d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//         CTkernel(step + (rem > 0), d_inout,
-//                  partial_twiddles,
-//                  radix_twiddles, radix_middles,
-//                  partial_group_gen_powers,
-//                  Domain_size_inverse,
-//                  lg_domain_size, is_intt, stream, &stage);
-//     } 
-// }
 
 }//namespace native
 }//namespace at

@@ -166,5 +166,5 @@ struct NTTHyperParam<BLS12_377_Fr_G1> {
     };
 };
 
-}//native
-}//at
+}//namespace native
+}//namespace at

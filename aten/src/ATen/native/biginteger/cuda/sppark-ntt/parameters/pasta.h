@@ -235,5 +235,5 @@ struct NTTHyperParam<PALLAS_Fr_G1> {
     };
 };
 
-}//native
-}//at
+}//namespace native
+}//namespace at

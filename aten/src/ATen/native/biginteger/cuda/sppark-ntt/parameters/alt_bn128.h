@@ -111,5 +111,5 @@ struct NTTHyperParam<ALT_BN128_Fr_G1> {
     };
 };
 
-}//native
-}//at
+}//namespace native
+}//namespace at

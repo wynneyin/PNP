@@ -39,7 +39,6 @@ Tensor params_zkp_cuda(int64_t domain_size, int64_t gpu_id, bool is_intt,
     auto S2 = 32+64+128+256+512;
     auto S3 = 64*64 + 4096*64 + 128*128 + 256*256 + 512*512;
     auto S4 = domain_size + 1;
-    //TODO: how to get second-dim of the tensor?
 
     auto params = at::empty({S1 + S2 + S3 + S4, num_uint64(*dtype)}, dtype, layout, device, pin_memory, c10::nullopt); 
     params_zkp_template(params, gpu_id, is_intt);

@@ -33,7 +33,6 @@ struct BLS12_381_Fr_G1 : public bls12_381_fr_mont {
     __device__ __forceinline__ BLS12_381_Fr_G1(const bls12_381_fr_mont& a) : bls12_381_fr_mont(a) {}
 };
 
-
 static __device__ __constant__ __align__(16) const uint32_t BLS12_381_P[12] = {
     TO_CUDA_T(0xb9feffffffffaaab), TO_CUDA_T(0x1eabfffeb153ffff),
     TO_CUDA_T(0x6730d2a0f6b0f624), TO_CUDA_T(0x64774b84f38512bf),
@@ -60,6 +59,7 @@ typedef mont_t<381, BLS12_381_P, BLS12_381_M0,
                     BLS12_381_Px8> bls12_381_fq_mont;
 struct BLS12_381_Fq_G1 : public bls12_381_fq_mont {
     using mem_t = BLS12_381_Fq_G1;
+    using coeff_t = BLS12_381_Fr_G1;
     __device__ __forceinline__ BLS12_381_Fq_G1() {}
     __device__ __forceinline__ BLS12_381_Fq_G1(const bls12_381_fq_mont& a) : bls12_381_fq_mont(a) {}
 };

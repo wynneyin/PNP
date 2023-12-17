@@ -21,21 +21,6 @@ static const vec256 Pallas_Px2 = { /* left-aligned modulus */
     TO_LIMB_T(0x325a61da00000002), TO_LIMB_T(0x448d31f81299f237),
     TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x8000000000000000)
 };
-typedef blst_256_t<255, Pallas_P, 0x992d30ecffffffff,
-                    Pallas_RR, Pallas_one> pallas_fr_mont;
-struct PALLAS_Fr_G1 : public pallas_fr_mont {
-    using mem_t = PALLAS_Fr_G1;
-    inline PALLAS_Fr_G1() = default;
-    inline PALLAS_Fr_G1(const pallas_fr_mont& a) : pallas_fr_mont(a) {}
-};
-
-typedef blst_256_t<255, Pallas_P, 0x992d30ecffffffff,
-                    Pallas_RR, Pallas_one> vesta_fq_mont;
-struct VESTA_Fq_G1 : public vesta_fq_mont {
-    using mem_t = VESTA_Fq_G1;
-    inline VESTA_Fq_G1() = default;
-    inline VESTA_Fq_G1(const vesta_fq_mont& a) : vesta_fq_mont(a) {}
-};
 
 static const vec256 Vesta_P = {
     TO_LIMB_T(0x8c46eb2100000001), TO_LIMB_T(0x224698fc0994a8dd),
@@ -53,10 +38,20 @@ static const vec256 Vesta_Px2 = { /* left-aligned modulus */
     TO_LIMB_T(0x188dd64200000002), TO_LIMB_T(0x448d31f8132951bb),
     TO_LIMB_T(0x0000000000000000), TO_LIMB_T(0x8000000000000000)
 };
+
+typedef blst_256_t<255, Pallas_P, 0x992d30ecffffffff,
+                    Pallas_RR, Pallas_one> pallas_fr_mont;
+struct PALLAS_Fr_G1 : public pallas_fr_mont {
+    using mem_t = PALLAS_Fr_G1;
+    inline PALLAS_Fr_G1() = default;
+    inline PALLAS_Fr_G1(const pallas_fr_mont& a) : pallas_fr_mont(a) {}
+};
+
 typedef blst_256_t<255, Vesta_P, 0x8c46eb20ffffffff,
                 Vesta_RR, Vesta_one> pallas_fq_mont;
 struct PALLAS_Fq_G1 : public pallas_fq_mont {
     using mem_t = PALLAS_Fq_G1;
+    using coeff_t = PALLAS_Fr_G1;
     inline PALLAS_Fq_G1() = default;
     inline PALLAS_Fq_G1(const pallas_fq_mont& a) : pallas_fq_mont(a) {}
 };
@@ -67,6 +62,15 @@ struct VESTA_Fr_G1 : public vesta_fr_mont {
     using mem_t = VESTA_Fr_G1;
     inline VESTA_Fr_G1() = default;
     inline VESTA_Fr_G1(const vesta_fr_mont& a) : vesta_fr_mont(a) {}
+};
+
+typedef blst_256_t<255, Pallas_P, 0x992d30ecffffffff,
+                    Pallas_RR, Pallas_one> vesta_fq_mont;
+struct VESTA_Fq_G1 : public vesta_fq_mont {
+    using mem_t = VESTA_Fq_G1;
+    using coeff_t = VESTA_Fr_G1;
+    inline VESTA_Fq_G1() = default;
+    inline VESTA_Fq_G1(const vesta_fq_mont& a) : vesta_fq_mont(a) {}
 };
 
 } // namespace native

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <_types/_uint64_t.h>
 #include <stdint.h>
 #include <stdexcept>
 #include <type_traits>

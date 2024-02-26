@@ -44,6 +44,7 @@ typedef blst_384_t<377, BLS12_377_P, 0x8508bfffffffffffu,
                         BLS12_377_RR, BLS12_377_ONE> bls12_377_fq_mont;
 struct BLS12_377_Fq_G1 : public bls12_377_fq_mont {
     using mem_t = BLS12_377_Fq_G1;
+    using coeff_t = BLS12_377_Fr_G1;
     inline BLS12_377_Fq_G1() = default;
     inline BLS12_377_Fq_G1(const bls12_377_fq_mont& a) : bls12_377_fq_mont(a) {}
 };

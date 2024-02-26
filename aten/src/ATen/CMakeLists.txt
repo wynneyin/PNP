@@ -120,7 +120,6 @@ file(GLOB native_biginteger_cpp "native/biginteger/*.cpp" "native/biginteger/cpu
 file(GLOB_RECURSE native_biginteger_cpu_cpp "native/biginteger/cpu/*.cpp")
 list(APPEND native_biginteger_cpp ${native_biginteger_cpu_cpp})
 
-
 file(GLOB native_h "native/*.h")
 file(GLOB native_ao_sparse_h
             "native/ao_sparse/*.h"

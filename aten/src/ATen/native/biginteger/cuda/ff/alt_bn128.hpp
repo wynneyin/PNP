@@ -56,7 +56,7 @@ typedef mont_t<254, ALT_BN128_P, ALT_BN128_M0,
 
 struct ALT_BN128_Fq_G1 : public alt_bn128_fq_mont {
     using mem_t = ALT_BN128_Fq_G1;
-    using scalar_t = ALT_BN128_Fr_G1;
+    using coeff_t = ALT_BN128_Fr_G1;
     __device__ __forceinline__ ALT_BN128_Fq_G1() {}
     __device__ __forceinline__ ALT_BN128_Fq_G1(const alt_bn128_fq_mont& a) : alt_bn128_fq_mont(a) {}
 };

@@ -36,7 +36,7 @@ from .transformer import TransformerEncoder, TransformerDecoder, \
     TransformerEncoderLayer, TransformerDecoderLayer, Transformer
 from .flatten import Flatten, Unflatten
 from .channelshuffle import ChannelShuffle
-from .ntt_zkp import NTT_zkp
+from .zksnark import Ntt, Intt, Ntt_coset, Intt_coset
 
 __all__ = [
     'Module', 'Identity', 'Linear', 'Conv1d', 'Conv2d', 'Conv3d', 'ConvTranspose1d',
@@ -65,5 +65,6 @@ __all__ = [
     'LazyBatchNorm1d', 'LazyBatchNorm2d', 'LazyBatchNorm3d',
     'LazyInstanceNorm1d', 'LazyInstanceNorm2d', 'LazyInstanceNorm3d',
     'Flatten', 'Unflatten', 'Hardsigmoid', 'Hardswish', 'SiLU', 'Mish', 'TripletMarginWithDistanceLoss', 'ChannelShuffle',
-    'CircularPad1d', 'CircularPad2d', 'CircularPad3d', 'NTT_zkp'
+    'CircularPad1d', 'CircularPad2d', 'CircularPad3d',
+    'Ntt', 'Intt', 'Ntt_coset', 'Intt_coset'
 ]

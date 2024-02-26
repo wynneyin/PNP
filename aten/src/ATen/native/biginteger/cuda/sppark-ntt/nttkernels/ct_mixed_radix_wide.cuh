@@ -1,5 +1,4 @@
 #include "algorithm.cuh"
-#include "algkernels.cuh"
 
 namespace at { 
 namespace native {
@@ -151,7 +150,7 @@ void CTkernel(int iterations, fr_t* d_inout,
         fr_t* partial_group_gen_powers,
         fr_t* Domain_size_inverse,
         int lg_domain_size, bool is_intt,
-        const cudaStream_t& stream, int* stage)
+        int* stage)
 {
     TORCH_CHECK(iterations <= 10, "CT_NTT iterations cannot exceed 10!");
     const int radix = iterations < 6 ? 6 : iterations;
@@ -172,7 +171,7 @@ void CTkernel(int iterations, fr_t* d_inout,
     unsigned int intermediate_twiddle_shift = 0;
 
     #define NTT_CONFIGURATION \
-            num_blocks, block_size, sizeof(fr_t) * block_size, stream
+            num_blocks, block_size, sizeof(fr_t) * block_size
 
     #define NTT_ARGUMENTS radix, lg_domain_size, *stage, iterations, \
             d_inout, partial_twiddles, \

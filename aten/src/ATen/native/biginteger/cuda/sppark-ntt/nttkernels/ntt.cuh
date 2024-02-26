@@ -4,7 +4,6 @@
 #include <iostream>
 #include <ATen/cuda/CUDAContext.h>
 #include <ATen/native/cuda/thread_constants.h>
-#include "ATen/native/biginteger/cuda/sppark-util/gpu_t.cuh"
 #include "ATen/native/biginteger/cuda/CurveDef.cuh"
 #include "kernels.cuh"
 #include "algorithm.cuh"
@@ -20,26 +19,26 @@ enum class Algorithm { GS, CT };
 
 template <typename fr_t>
 void bit_rev(fr_t* d_out, const fr_t* d_inp,
-                        uint32_t lg_domain_size, stream_t& stream)
+                        uint32_t lg_domain_size)
 {
     TORCH_CHECK(lg_domain_size <= MAX_LG_DOMAIN_SIZE, "NTT length cannot exceed MAX_LG_DOMAIN_SIZE!");
     size_t domain_size = (size_t)1 << lg_domain_size;
 
     if (domain_size <= WARP_SZ)
         bit_rev_permutation
-            <<<1, domain_size, 0, stream>>>
+            <<<1, domain_size, 0>>>
             (d_out, d_inp, lg_domain_size);
     else if (d_out == d_inp)
         bit_rev_permutation
-            <<<domain_size/WARP_SZ, WARP_SZ, 0, stream>>>
+            <<<domain_size/WARP_SZ, WARP_SZ, 0>>>
             (d_out, d_inp, lg_domain_size);
     else if (domain_size < 1024)
         bit_rev_permutation_aux
-            <<<1, domain_size / 8, domain_size * sizeof(fr_t), stream>>>
+            <<<1, domain_size / 8, domain_size * sizeof(fr_t)>>>
             (d_out, d_inp, lg_domain_size);
     else
         bit_rev_permutation_aux
-            <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(fr_t), stream>>>
+            <<<domain_size / 1024, 1024 / 8, 1024 * sizeof(fr_t)>>>
             (d_out, d_inp, lg_domain_size);
 
     C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -49,18 +48,18 @@ template <typename fr_t>
 void LDE_powers(fr_t* inout, fr_t* pggp, 
                         bool bitrev,
                         uint32_t lg_domain_size, uint32_t lg_blowup,
-                        stream_t& stream, bool ext_pow = false)
+                        bool ext_pow = false)
 {
     size_t domain_size = (size_t)1 << lg_domain_size;
 
     if (domain_size < WARP_SZ)
-        LDE_distribute_powers<<<1, domain_size, 0, stream>>>
+        LDE_distribute_powers<<<1, domain_size, 0>>>
                                 (inout, lg_blowup, bitrev, pggp, ext_pow);
     else if (domain_size < 512)
-        LDE_distribute_powers<<<domain_size / WARP_SZ, WARP_SZ, 0, stream>>>
+        LDE_distribute_powers<<<domain_size / WARP_SZ, WARP_SZ, 0>>>
                                 (inout, lg_blowup, bitrev, pggp, ext_pow);
     else
-        LDE_distribute_powers<<<domain_size / 512, 512, 0, stream>>>
+        LDE_distribute_powers<<<domain_size / 512, 512, 0>>>
                                 (inout, lg_blowup, bitrev, pggp, ext_pow);
 
     C10_CUDA_KERNEL_LAUNCH_CHECK();
@@ -75,7 +74,7 @@ void NTT_internal(fr_t* d_inout,
                     fr_t* Domain_size_inverse,
                     uint32_t lg_domain_size,
                     InputOutputOrder order, Direction direction,
-                    Type type, stream_t& stream,
+                    Type type,
                     bool coset_ext_pow = false)
 {
     // Pick an NTT algorithm based on the input order and the desired output
@@ -88,7 +87,7 @@ void NTT_internal(fr_t* d_inout,
 
     switch (order) {
         case InputOutputOrder::NN:
-            bit_rev(d_inout, d_inout, lg_domain_size, stream);
+            bit_rev(d_inout, d_inout, lg_domain_size);
             bitrev = true;
             algorithm = Algorithm::CT;
             break;
@@ -109,18 +108,18 @@ void NTT_internal(fr_t* d_inout,
     }
 
     if (!intt && type == Type::coset)
-        LDE_powers(d_inout, partial_group_gen_powers, bitrev, lg_domain_size, 0, stream,
+        LDE_powers(d_inout, partial_group_gen_powers, bitrev, lg_domain_size, 0,
                     coset_ext_pow);
 
     switch (algorithm) {
         case Algorithm::GS:
-            GS_NTT(d_inout, lg_domain_size, intt, stream,
+            GS_NTT(d_inout, lg_domain_size, intt,
                    partial_twiddles, 
                    radix_twiddles, radix_middles, 
                    partial_group_gen_powers, Domain_size_inverse);
             break;
         case Algorithm::CT:
-            CT_NTT(d_inout, lg_domain_size, intt, stream,
+            CT_NTT(d_inout, lg_domain_size, intt,
                    partial_twiddles, 
                    radix_twiddles, radix_middles, 
                    partial_group_gen_powers, Domain_size_inverse);
@@ -128,11 +127,11 @@ void NTT_internal(fr_t* d_inout,
     }
 
     if (intt && type == Type::coset)
-        LDE_powers(d_inout, partial_group_gen_powers, !bitrev, lg_domain_size, 0, stream,
+        LDE_powers(d_inout, partial_group_gen_powers, !bitrev, lg_domain_size, 0,
                     coset_ext_pow);
 
     if (order == InputOutputOrder::RR)
-        bit_rev(d_inout, d_inout, lg_domain_size, stream);
+        bit_rev(d_inout, d_inout, lg_domain_size);
 }
 
 template <typename fr_t>
@@ -149,18 +148,16 @@ void compute_ntt(size_t device_id, fr_t* inout,
 {
     TORCH_CHECK(lg_domain_size != 0, "NTT Length cannot be 0!");
 
-    auto& gpu = select_gpu(device_id);
-    gpu.select();
-    C10_CUDA_KERNEL_LAUNCH_CHECK();
-
-    size_t domain_size = (size_t)1 << lg_domain_size;
+    // auto& gpu = select_gpu(device_id);
+    // gpu.select();
+    // C10_CUDA_KERNEL_LAUNCH_CHECK();
 
     NTT_internal(inout, 
                  partial_twiddles, radix_twiddles, radix_middles,
                  partial_group_gen_powers, Domain_size_inverse,
-                 lg_domain_size, ntt_order, ntt_direction, ntt_type, gpu);
+                 lg_domain_size, ntt_order, ntt_direction, ntt_type);
     C10_CUDA_KERNEL_LAUNCH_CHECK();
-    gpu.sync();
+    // gpu.sync();
 }
 
 }//namespace native

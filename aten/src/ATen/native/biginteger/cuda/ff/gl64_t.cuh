@@ -1,4 +1,9 @@
-#pragma once
+// Copyright Supranational LLC
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
+#ifndef __GL64_T_CUH__
+#define __GL64_T_CUH__
 
 # include <cstdint>
 
@@ -518,4 +523,5 @@ public:
 
 # undef inline
 # undef asm
+#endif
 #endif

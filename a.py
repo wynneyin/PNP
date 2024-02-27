@@ -66,5 +66,3 @@ def check_ntt_coset():
     intt_out= intt_out.tolist()
     print(intt_out[:5])
     print(intt_out == x_mont.tolist())
-
-check_ntt_coset()

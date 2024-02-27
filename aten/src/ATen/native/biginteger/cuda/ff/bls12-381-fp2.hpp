@@ -1,4 +1,10 @@
-#pragma once
+// Copyright Supranational LLC
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
+#ifndef __SPPARK_FF_BLS12_381_FP2_HPP__
+#define __SPPARK_FF_BLS12_381_FP2_HPP__
+
 #include "bls12-381.hpp"
 
 #ifdef __CUDA_ARCH__
@@ -388,4 +394,5 @@ public:
 #  endif
 # endif
 };
+#endif
 #endif

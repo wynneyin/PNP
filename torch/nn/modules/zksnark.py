@@ -1,21 +1,11 @@
-import math
 from typing import Any
 
 import torch
 from torch import Tensor
-from torch.nn.parameter import Parameter, UninitializedParameter
-from .. import functional as F
-from .. import init
 from .module import Module
-from .lazy import LazyModuleMixin
 
 
-__all__ = [
-    'Ntt',
-    'Intt',
-    'Ntt_coset',
-    'Intt_coset'
-]
+__all__ = ["Ntt", "Intt", "Ntt_coset", "Intt_coset"]
 
 
 class Ntt(Module):
@@ -40,18 +30,21 @@ class Ntt(Module):
         >>> output = m.forward(input)
 
     """
-    __constants__ = ['Params']
+
+    __constants__ = ["Params"]
 
     Params: Tensor
-    
-    def __init__(self,  domain_size: int, dtype) -> None:
-        super().__init__()
-        self.Params = torch.params_zkp(domain_size, is_intt = False, dtype = dtype, device='cuda')
 
+    def __init__(self, domain_size: int, dtype) -> None:
+        super().__init__()
+        self.Params = torch.params_zkp(
+            domain_size, is_intt=False, dtype=dtype, device="cuda"
+        )
 
     def forward(self, input: Tensor) -> Tensor:
-        output = torch.ntt_zkp(input, self.Params, is_intt = False, is_coset = False)
+        output = torch.ntt_zkp(input, self.Params, is_intt=False, is_coset=False)
         return output
+
 
 class Intt(Module):
     r"""Applies a Number Theory Transformation(NTT) for a 2-dim tensor`
@@ -74,19 +67,22 @@ class Intt(Module):
         >>> output = m.forward(input)
 
     """
-    __constants__ = ['Params']
+
+    __constants__ = ["Params"]
 
     Params: Tensor
-    
+
     def __init__(self, domain_size: int, dtype) -> None:
         super().__init__()
-        self.Params = torch.params_zkp(domain_size, is_intt = True, dtype = dtype, device='cuda')
-
+        self.Params = torch.params_zkp(
+            domain_size, is_intt=True, dtype=dtype, device="cuda"
+        )
 
     def forward(self, input: Tensor) -> Tensor:
-        output = torch.ntt_zkp(input, self.Params, is_intt = True, is_coset = False)
+        output = torch.ntt_zkp(input, self.Params, is_intt=True, is_coset=False)
         return output
-    
+
+
 class Ntt_coset(Module):
     r"""Applies a Number Theory Transformation(NTT) for a 2-dim tensor`
 
@@ -109,19 +105,22 @@ class Ntt_coset(Module):
         >>> output = m.forward(input)
 
     """
-    __constants__ = ['Params']
+
+    __constants__ = ["Params"]
 
     Params: Tensor
-    
+
     def __init__(self, domain_size: int, dtype) -> None:
         super().__init__()
-        self.Params = torch.params_zkp(domain_size, is_intt = False, dtype = dtype, device='cuda')
-
+        self.Params = torch.params_zkp(
+            domain_size, is_intt=False, dtype=dtype, device="cuda"
+        )
 
     def forward(self, input: Tensor) -> Tensor:
-        output = torch.ntt_zkp(input, self.Params, is_intt = False, is_coset = True)
+        output = torch.ntt_zkp(input, self.Params, is_intt=False, is_coset=True)
         return output
-    
+
+
 class Intt_coset(Module):
     r"""Applies a Number Theory Transformation(NTT) for a 2-dim tensor`
 
@@ -143,15 +142,17 @@ class Intt_coset(Module):
         >>> output = m.forward(input)
 
     """
-    __constants__ = ['Params']
+
+    __constants__ = ["Params"]
 
     Params: Tensor
-    
+
     def __init__(self, domain_size: int, dtype) -> None:
         super().__init__()
-        self.Params = torch.params_zkp(domain_size, is_intt = True, dtype = dtype, device='cuda')
-
+        self.Params = torch.params_zkp(
+            domain_size, is_intt=True, dtype=dtype, device="cuda"
+        )
 
     def forward(self, input: Tensor) -> Tensor:
-        output = torch.ntt_zkp(input, self.Params, is_intt = True, is_coset = True)
+        output = torch.ntt_zkp(input, self.Params, is_intt=True, is_coset=True)
         return output

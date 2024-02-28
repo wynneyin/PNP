@@ -468,7 +468,7 @@ static inline bool isMontgomeryField(ScalarType t) {
   return t == ScalarType::BigInteger_Mont || t == ScalarType::ALT_BN128_Fr_G1_Mont || t == ScalarType::ALT_BN128_Fr_G2_Mont || t == ScalarType::ALT_BN128_Fq_G1_Mont || t == ScalarType::ALT_BN128_Fq_G2_Mont || t == ScalarType::BLS12_377_Fr_G1_Mont || t == ScalarType::BLS12_377_Fr_G2_Mont || t == ScalarType::BLS12_377_Fq_G1_Mont || t == ScalarType::BLS12_377_Fq_G2_Mont || t == ScalarType::BLS12_381_Fr_G1_Mont || t == ScalarType::BLS12_381_Fr_G2_Mont || t == ScalarType::BLS12_381_Fq_G1_Mont || t == ScalarType::BLS12_381_Fq_G2_Mont || t == ScalarType::MNT4753_Fr_G1_Mont || t == ScalarType::MNT4753_Fr_G2_Mont || t == ScalarType::MNT4753_Fq_G1_Mont || t == ScalarType::MNT4753_Fq_G2_Mont || t == ScalarType::PALLAS_Fr_G1_Mont || t == ScalarType::PALLAS_Fr_G2_Mont || t == ScalarType::PALLAS_Fq_G1_Mont || t == ScalarType::PALLAS_Fq_G2_Mont || t == ScalarType::VESTA_Fr_G1_Mont || t == ScalarType::VESTA_Fr_G2_Mont || t == ScalarType::VESTA_Fq_G1_Mont || t == ScalarType::VESTA_Fq_G2_Mont;
 }
 
-static inline uint8_t bit_length(ScalarType t) {
+static inline uint16_t bit_length(ScalarType t) {
   switch (t) {
     case ScalarType::ALT_BN128_Fr_G1_Base: 
     case ScalarType::ALT_BN128_Fr_G1_Mont:
